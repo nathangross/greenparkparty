@@ -1,0 +1,20 @@
+models:
+  # Party:
+  #   title: string
+  #   date: date
+  #   rainout_date: date nullable
+  #   has_many: RSVP
+  #   soft_deletes: true
+
+  # RSVP:
+  #   party_id: id foreign:parties,id
+  #   email: string unique
+  #   comments: text nullable
+  #   has_many: User
+  #   soft_deletes: true
+
+  # User:
+  #   rsvp_id: id foreign:RSVPs,id
+  #   first_name: string
+  #   last_name: string
+  #   soft_deletes: true
