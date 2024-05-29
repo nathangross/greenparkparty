@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
             'first_name' => 'Nathan',
             'last_name' => 'Gross',
             'email' => 'nathan@bldg13.com',
-            'password' => bcrypt('password'),
+            'password' => bcrypt(env('ADMIN_PASSWORD')),
         ]);
 
         Party::create([
