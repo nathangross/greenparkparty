@@ -1,8 +1,11 @@
 <?php
 
+use App\Models\Party;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome');
+$party = Party::find(1);
+
+Route::view('/', 'welcome', ['party' => $party]);
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
@@ -12,4 +15,4 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
