@@ -16,7 +16,7 @@
         <meta property="og:title" content="Green Park Party">
     @endif
     <meta property="og:description" content="A neighborhood party in our local park!">
-    <meta property="og:image" content="{{ Vite::asset('images/OG_image.png') }}">
+    <meta property="og:image" content="{{ Vite::asset('resources/images/OG_image.png') }}">
     <meta property="og:url" content="https://greenparkparty.com">
 
     <!-- Fonts -->
