@@ -4,14 +4,20 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {{-- {{ $party = App\Models\Party::find(1) }} --}}
-    <title>
-        @if ($party)
-            {{ $party->primary_date_start->format('F j, Y') }}
-            -
-        @endif
-        Green Park Party
-    </title>
+    @if ($party)
+        <title>{{ $party->primary_date_start->format('F j, Y') }} - Green Park Party</title>
+    @else
+        <title>Green Park Party</title>
+    @endif
+
+    @if ($party)
+        <meta property="og:title" content="{{ $party->primary_date_start->format('F j, Y') }} - Green Park Party">
+    @else
+        <meta property="og:title" content="Green Park Party">
+    @endif
+    <meta property="og:description" content="A neighborhood party in our local park!">
+    <meta property="og:image" content="{{ Vite::asset('images/OG_image.png') }}">
+    <meta property="og:url" content="https://greenparkparty.com">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
