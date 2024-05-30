@@ -53,7 +53,7 @@
                     </div>
                 </x-forms.fieldset>
 
-                <x-forms.fieldset legend="Optional Information" description="Share as much or as little as you'd like. We'll never sell your information.">
+                <x-forms.fieldset legend="Optional Information" description="Share as much or as little as you'd like.">
 
                     <div class="grid gap-4">
                         <div class="mt-2 grid gap-4 @xl:grid-cols-3">
