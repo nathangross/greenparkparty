@@ -50,8 +50,8 @@
                 <x-logo />
             </div>
             <div class="flex w-full max-w-2xl flex-col items-center justify-center px-4 text-center">
-                <p class="text-2xl">Let’s connect and have a neighborhood party in our local park!</p>
-                <p>Please RSVP by June 15th, 2024.</p>
+                <p class="text-balance text-3xl">Let’s connect and have a neighborhood party in our local park!</p>
+                <p class="mt-4">Please RSVP by June 15th, 2024.</p>
                 <div class="group mt-12 flex flex-col items-center justify-center">
                     <a href="#rsvp" class="size-12 flex animate-bounce items-center justify-center rounded-full border border-green-dark/10 bg-white shadow">
                         <x-icons.arrow-down class="size-8 fill-green" />
@@ -82,13 +82,16 @@
                         </div>
                     </div>
                     <div class="py-8 italic">
-                        <div class="text-xl font-bold">
+                        <div class="text-xl font-bold text-green-dark/70">
                             <span>-</span>
                             <span class="text-xl font-bold">Featuring</span>
                             <span>-</span>
                         </div>
 
-                        <h2 class="text-3xl font-black">The Food Pitt™ Food Truck</h2>
+                        <h2 class="mt-2 text-3xl font-black">
+                            <span class="whitespace-nowrap">The Food Pitt™</span>
+                            <span class="whitespace-nowrap"> Food Truck</span>
+                        </h2>
                         <span>Serving from 6pm to 8pm</span>
                         <ul class="my-2 text-xl font-bold">
                             <li>burgers</li>
@@ -100,7 +103,7 @@
                     </div>
                     <div class="flex flex-col gap-4 py-8">
 
-                        <div class="">
+                        <div class="text-balance">
                             Feel free to bring your own snacks, beverages, chairs & lawn games.
                         </div>
 

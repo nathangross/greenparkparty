@@ -39,11 +39,11 @@
                                         <x-input type="number" id="attending_count" name="attending_count" wire:model="attending_count" />
                                     </div>
                                     <div class="flex flex-col">
-                                        <div class="flex items-center gap-2">
+                                        <div class="flex items-baseline gap-2">
                                             <input type="checkbox" id="volunteer" name="volunteer" wire:model="volunteer">
                                             <x-input.label for="volunteer">Check if you are interested in volunteering</x-input.label>
                                         </div>
-                                        <span class="mt-1 max-w-[65ch] text-gray-700">Since this is our first year, we're not sure yet how many volunteers we'll need. We'll probably need a few volunteers to help us get things set up and cleaned up when it's over.</span>
+                                        <p class="text-balance mt-1 max-w-[65ch] text-gray-700">Since this is our first year, we're not sure yet how many volunteers we'll need. We'll probably need a few volunteers to help us get things set up and cleaned up when it's over.</p>
                                     </div>
                                 </div>
 
