@@ -5,7 +5,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {{-- {{ $party = App\Models\Party::find(1) }} --}}
-    <title>{{ $party->primary_date_start->format('F j, Y') }} - Green Park Party </title>
+    <title>
+        @if ($party)
+            {{ $party->primary_date_start->format('F j, Y') }}
+            -
+        @endif
+        Green Park Party
+    </title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -18,7 +24,7 @@
 <body id="top" x-data="{
     isScrolled: false
 }" class="font-sans text-green-dark antialiased">
-    <nav :class="isScrolled ? ' shadow-lg' : ''" class="fixed top-0 z-20 w-full bg-white px-4 py-1 transition-all lg:py-3">
+    <nav :class="isScrolled ? ' shadow-lg' : ''" class="fixed top-0 z-20 w-full bg-white px-4 py-3 transition-all">
         <div class="mx-auto flex h-full max-w-lg items-center justify-center gap-4">
             <a href="#top" x-transition :class="isScrolled ? 'flex' : 'hidden'" class="">
                 <x-logo class="lg:size-24 size-20" />
@@ -57,8 +63,12 @@
                 <div class="mx-auto flex max-w-lg flex-col divide-y divide-green-dark/30 text-center">
                     <div class="flex flex-col gap-4 py-8">
                         <div class="flex flex-col">
-                            <span class="text-4xl font-bold">{{ $party->primary_date_start->format('F j') }}</span>
-                            <span class="text-2xl">{{ $party->primary_date_start->format('h:i A') }} to {{ $party->primary_date_end->format('h:i A') }}</span>
+                            @if ($party)
+                                <span class="text-4xl font-bold">{{ $party->primary_date_start->format('F j') }}</span>
+                                <span class="text-2xl">{{ $party->primary_date_start->format('h:i A') }} to {{ $party->primary_date_end->format('h:i A') }}</span>
+                            @else
+                                <span class="text-4xl font-bold">No party found.</span>
+                            @endif
                         </div>
                         <div class="flex flex-col">
                             <span class="text-xl font-bold">Green Park Shelter</span>
