@@ -20,14 +20,14 @@
                 <x-forms.fieldset legend="Will you be attending?">
                     <div x-data="{ showAttending: @entangle('showAttending') }">
                         <div class="flex flex-col gap-8">
-                            <div class="mt-4 flex gap-8">
+                            <div class="mt-4 grid gap-8 lg:grid-cols-2">
                                 <label for="attending_yes" class="flex items-center gap-2 rounded-full bg-green-dark/10 px-4 py-2">
                                     <input type="radio" id="attending_yes" name="showAttending" value="1" x-model="showAttending" wire:model="showAttending">
                                     <span class="text-lg font-bold">Yes!</span>
                                 </label>
                                 <label for="attending_no" class="flex items-center gap-2 rounded-full bg-green-dark/10 px-4 py-2">
                                     <input type="radio" id="attending_no" name="showAttending" value="0" x-model="showAttending" wire:model="showAttending">
-                                    <span class="text-lg font-bold">Sorry, can't make it</span>
+                                    <span class="text-lg font-bold">No</span>
                                 </label>
                             </div>
                             <div x-show="showAttending == true" class="">
@@ -72,8 +72,8 @@
                         </div>
 
                         <div class="">
-                            <label for="message">Leave a note <span class="text-sm text-gray-700">(optional)</span></label>
-                            <textarea name="message" id="message" class="h-32 w-full rounded-lg border border-green-dark" wire:model="message"></textarea>
+                            <x-input.label for="message">Leave a note </x-input.label>
+                            <textarea name="message" id="message" class="mt-1 h-32 w-full rounded-lg border border-green-dark" wire:model="message"></textarea>
                         </div>
                     </div>
                 </x-forms.fieldset>

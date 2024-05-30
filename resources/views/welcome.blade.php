@@ -18,22 +18,22 @@
 <body id="top" x-data="{
     isScrolled: false
 }" class="font-sans text-green-dark antialiased">
-    <nav :class="isScrolled ? ' shadow-lg' : ''" class="fixed top-0 z-20 h-[120px] w-full bg-white py-3 transition-all">
+    <nav :class="isScrolled ? ' shadow-lg' : ''" class="fixed top-0 z-20 w-full bg-white px-4 py-1 transition-all lg:py-3">
         <div class="mx-auto flex h-full max-w-lg items-center justify-center gap-4">
             <a href="#top" x-transition :class="isScrolled ? 'flex' : 'hidden'" class="">
-                <x-logo class="size-24" />
+                <x-logo class="lg:size-24 size-20" />
             </a>
             <a href="#details" class="rounded-full px-4 py-2 text-lg font-bold italic text-green hover:bg-green/10">
-                Party Details
+                Details
             </a>
             <a href="#rsvp" class="rounded-full px-4 py-2 text-lg font-bold italic text-green hover:bg-green/10">
-                RSVP Form
+                RSVP
             </a>
         </div>
     </nav>
     <div class="mt-16 flex min-h-screen w-full flex-col items-center justify-center">
         <div x-intersect:leave="isScrolled = true" x-intersect:enter="isScrolled = false"></div>
-        <section class="py-12 lg:py-24">
+        <section class="px-4 py-12 lg:py-24">
             <div class="mx-auto w-full max-w-[400px] py-16">
                 <x-logo />
             </div>
