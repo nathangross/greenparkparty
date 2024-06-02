@@ -43,7 +43,7 @@
                                             <input type="checkbox" id="volunteer" name="volunteer" wire:model="volunteer">
                                             <x-input.label for="volunteer">Check if you are interested in volunteering</x-input.label>
                                         </div>
-                                        <p class="text-balance mt-1 max-w-[65ch] text-gray-700">Since this is our first year, we're not sure yet how many volunteers we'll need. We'll probably need a few volunteers to help us get things set up and cleaned up when it's over.</p>
+                                        <p class="text-balance mt-1 text-gray-700">Since this is our first year, we're not sure yet how many volunteers we'll need. We'll probably need a few volunteers to help us get things set up and cleaned up when it's over.</p>
                                     </div>
                                 </div>
 
