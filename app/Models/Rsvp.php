@@ -28,4 +28,9 @@ class Rsvp extends Model
     {
         return $this->belongsTo(Party::class, 'party_id');
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

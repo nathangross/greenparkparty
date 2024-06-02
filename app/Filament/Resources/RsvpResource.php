@@ -2,16 +2,17 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\RsvpResource\Pages;
-use App\Filament\Resources\RsvpResource\RelationManagers;
-use App\Models\Rsvp;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use App\Models\Rsvp;
+use App\Models\User;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\RsvpResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\RsvpResource\RelationManagers;
 
 class RsvpResource extends Resource
 {
@@ -26,9 +27,12 @@ class RsvpResource extends Resource
                 Forms\Components\Select::make('party_id')
                     ->relationship('party', 'title')
                     ->required(),
-                Forms\Components\TextInput::make('user_id')
-                    ->required()
-                    ->numeric(),
+
+                Forms\Components\TextInput::make('user.first_name')
+                    ->label('Neighbor')
+                    ->formatStateUsing(function ($state, $record) {
+                        return $record->user->first_name . ' ' . $record->user->last_name;
+                    }),
                 Forms\Components\TextInput::make('attending_count')
                     ->required()
                     ->numeric()
@@ -49,11 +53,18 @@ class RsvpResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('party.title')
-                    ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
-                    ->sortable(),
+                // Tables\Columns\TextColumn::make('user.first_name')
+                //     ->sortable(),
+                // Tables\Columns\TextColumn::make('user.last_name')
+                //     ->sortable(),
+
+                Tables\Columns\TextColumn::make('user.first_name')
+                    ->label('Full Name')
+                    ->sortable()
+                    ->formatStateUsing(function ($state, $record) {
+                        return $record->user->first_name . ' ' . $record->user->last_name;
+                    }),
                 Tables\Columns\TextColumn::make('attending_count')
                     ->numeric()
                     ->sortable(),
