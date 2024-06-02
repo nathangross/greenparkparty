@@ -71,7 +71,7 @@
                         <div class="flex flex-col">
                             @if ($party)
                                 <span class="text-4xl font-bold">{{ $party->primary_date_start->format('F j') }}</span>
-                                <span class="text-2xl">{{ $party->primary_date_start->format('h:i A') }} to {{ $party->primary_date_end->format('h:i A') }}</span>
+                                <span class="text-2xl">{{ $party->primary_date_start->format('g:i A') }} to {{ $party->primary_date_end->format('g:i A') }}</span>
                             @else
                                 <span class="text-4xl font-bold">No party found.</span>
                             @endif
