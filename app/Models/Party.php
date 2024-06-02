@@ -17,11 +17,10 @@ class Party extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'primary_date_start' => 'date',
-        'primary_date_end' => 'date',
-        'secondary_date_start' => 'date',
-        'secondary_end_date' => 'date',
-        'rainout_date' => 'date',
+        'primary_date_start' => 'datetime',
+        'primary_date_end' => 'datetime',
+        'secondary_date_start' => 'datetime',
+        'secondary_end_date' => 'datetime',
     ];
 
     public function rsvps()
