@@ -13,6 +13,7 @@ class RsvpCount extends BaseWidget
         return [
             Stat::make('Total Attending', Rsvp::sum('attending_count')),
             Stat::make('Total RSVPs', Rsvp::count()),
+            Stat::make('Total Volunteers', Rsvp::sum('volunteer')),
         ];
     }
 }
