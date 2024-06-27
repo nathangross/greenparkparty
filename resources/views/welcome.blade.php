@@ -56,7 +56,7 @@
                     <p class="mt-2 text-sm">Note: The Food Pitt™ was no longer able to do our party, but Claybourne
                         Grill jumped
                         in to save
-                        the day. Thank you Robbin!</p>
+                        the day. Thank you Robin!</p>
                     <p class="text-sm mt-2">They have a larger menu. Click below to see their menu and prices</p>
                     <div class="mt-4">
                         <a href="{{route('menu')}}"
