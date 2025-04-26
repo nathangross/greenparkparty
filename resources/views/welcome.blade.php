@@ -1,15 +1,18 @@
 <x-layouts.app :party="$party">
 
-    <section class="px-4 py-12 lg:py-24">
+    <section class="w-full px-4 py-12 lg:py-24">
         <div class="mx-auto w-full max-w-[400px] py-16">
             <x-logo />
         </div>
-        <div class="flex w-full max-w-2xl flex-col items-center justify-center px-4 text-center">
-            <p class="text-balance text-3xl">Let’s connect and have a neighborhood party in our local park!</p>
+        <div class="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 text-center">
+            <p class="text-balance text-4xl">
+                It's a new year! Let's have another neighborhood party in our local park!
+                {{-- Let’s connect and have a neighborhood party in our local park! --}}
+            </p>
             {{-- <p class="mt-4">Please RSVP by June 15th, 2024.</p> --}}
             <div class="group mt-12 flex flex-col items-center justify-center">
                 <a href="#rsvp"
-                    class="size-12 flex animate-bounce items-center justify-center rounded-full border border-green-dark/10 bg-white shadow">
+                    class="flex size-12 animate-bounce items-center justify-center rounded-full border border-green-dark/10 bg-white shadow">
                     <x-icons.arrow-down class="size-8 fill-green" />
                 </a>
                 <div class="opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -22,15 +25,15 @@
         <x-layouts.inner>
             <x-headings.hero class="text-center">Party Details</x-headings.hero>
 
-            <div class="mx-auto flex max-w-lg flex-col divide-y  divide-green-dark/30 text-center">
+            <div class="mx-auto flex max-w-lg flex-col divide-y divide-green-dark/30 text-center">
                 <div class="flex flex-col gap-4 py-8">
                     <div class="flex flex-col">
                         @if ($party)
-                        <span class="text-4xl font-bold">{{ $party->primary_date_start->format('F j') }}</span>
-                        <span class="text-2xl">{{ $party->primary_date_start->format('g:i A') }} to {{
-                            $party->primary_date_end->format('g:i A') }}</span>
+                            <span class="text-4xl font-bold">{{ $party->primary_date_start->format('F j, Y') }}</span>
+                            <span class="text-2xl">{{ $party->primary_date_start->format('g:i A') }} to
+                                {{ $party->primary_date_end->format('g:i A') }}</span>
                         @else
-                        <span class="text-4xl font-bold">No party found.</span>
+                            <span class="text-4xl font-bold">No party found.</span>
                         @endif
                     </div>
                     <div class="flex flex-col">
@@ -40,10 +43,10 @@
                 </div>
                 <div class="py-8 italic">
                     <div
-                        class="text-xs text-orange-900 uppercase font-bold bg-orange-500 border border-orange-600 px-2 py-1 rounded-full inline-flex">
+                        class="inline-flex rounded-full border border-orange-600 bg-orange-500 px-2 py-1 text-xs font-bold uppercase text-orange-900">
                         Updated: June 25th
                     </div>
-                    <div class="text-xl mt-1 font-bold text-green-dark/70">
+                    <div class="mt-1 text-xl font-bold text-green-dark/70">
                         <span>-</span>
                         <span class="text-xl font-bold">Featuring</span>
                         <span>-</span>
@@ -57,10 +60,10 @@
                         Grill jumped
                         in to save
                         the day. Thank you Robin!</p>
-                    <p class="text-sm mt-2">They have a larger menu. Click below to see their menu and prices</p>
+                    <p class="mt-2 text-sm">They have a larger menu. Click below to see their menu and prices</p>
                     <div class="mt-4">
-                        <a href="{{route('menu')}}"
-                            class="text-lg font-bold italic bg-green px-4 py-2 shadow-sm hover:shadow-lg transition-all hover:scale-[102%] duration-300 text-green-dark items-center justify-center inline-flex rounded">
+                        <a href="{{ route('menu') }}"
+                            class="inline-flex items-center justify-center rounded bg-green px-4 py-2 text-lg font-bold italic text-green-dark shadow-sm transition-all duration-300 hover:scale-[102%] hover:shadow-lg">
                             Menu & Prices
                         </a>
                     </div>

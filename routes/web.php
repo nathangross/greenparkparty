@@ -8,11 +8,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Route;
 
 View::composer('*', function ($view) {
-    try {
-        $party = Party::findOrFail(1);
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-        $party = null;
-    }
+    $party = Party::where('is_active', true)->first();
     $view->with('party', $party);
 });
 
@@ -29,5 +25,16 @@ Route::view('dashboard', 'dashboard')
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
+
+Route::get('/send-test-email', function () {
+    $details = [
+        'message' => 'This is a test email to check Mailgun configuration.'
+    ];
+
+    // Replace with your email address for testing
+    Mail::to('nathan@bldg13.com')->send(new TestEmail($details));
+
+    return 'Test email sent!';
+});
 
 require __DIR__ . '/auth.php';
