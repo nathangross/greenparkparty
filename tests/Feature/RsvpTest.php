@@ -7,10 +7,20 @@ use Livewire\Livewire;
 use App\Livewire\RsvpForm;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+
+
 
 uses(RefreshDatabase::class);
 
+test('true is true', function () {
+    expect(true)->toBeTrue();
+});
+
 test('a user can submit an RSVP form', function () {
+    DB::listen(function ($query) {
+        var_dump($query->sql);
+    });
     // Create a party to ensure the party_id exists
     $party = Party::factory()->create();
 
