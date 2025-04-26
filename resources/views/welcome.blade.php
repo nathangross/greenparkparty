@@ -12,7 +12,7 @@
             {{-- <p class="mt-4">Please RSVP by June 15th, 2024.</p> --}}
             <div class="group mt-12 flex flex-col items-center justify-center">
                 <a href="#rsvp"
-                    class="flex size-12 animate-bounce items-center justify-center rounded-full border border-green-dark/10 bg-white shadow">
+                    class="flex size-12 animate-bounce items-center justify-center rounded-full border border-green-dark/10 bg-white shadow-sm">
                     <x-icons.arrow-down class="size-8 fill-green" />
                 </a>
                 <div class="opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -63,7 +63,7 @@
                     <p class="mt-2 text-sm">They have a larger menu. Click below to see their menu and prices</p>
                     <div class="mt-4">
                         <a href="{{ route('menu') }}"
-                            class="inline-flex items-center justify-center rounded bg-green px-4 py-2 text-lg font-bold italic text-green-dark shadow-sm transition-all duration-300 hover:scale-[102%] hover:shadow-lg">
+                            class="inline-flex items-center justify-center rounded-sm bg-green px-4 py-2 text-lg font-bold italic text-green-dark shadow-xs transition-all duration-300 hover:scale-[102%] hover:shadow-lg">
                             Menu & Prices
                         </a>
                     </div>
