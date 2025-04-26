@@ -2,7 +2,7 @@
 
     <section class="w-full px-4 py-12 lg:py-24">
         <div class="mx-auto w-full max-w-[400px] py-16">
-            <x-logo />
+            <x-logo.reverse />
         </div>
         <div class="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 text-center">
             <p class="text-balance text-4xl">
@@ -12,20 +12,20 @@
             {{-- <p class="mt-4">Please RSVP by June 15th, 2024.</p> --}}
             <div class="group mt-12 flex flex-col items-center justify-center">
                 <a href="#rsvp"
-                    class="flex size-12 animate-bounce items-center justify-center rounded-full border border-green-dark/10 bg-white shadow-sm">
-                    <x-icons.arrow-down class="size-8 fill-green" />
+                    class="border-green-dark/10 flex size-12 animate-bounce items-center justify-center rounded-full border bg-white shadow-sm">
+                    <x-icons.arrow-down class="fill-green size-8" />
                 </a>
                 <div class="opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <span class="text-sm text-green-dark/50">Go RSVP!</span>
+                    <span class="text-green-dark/50 text-sm">Go RSVP!</span>
                 </div>
             </div>
         </div>
     </section>
-    <section id="details" class="w-full bg-green/25 py-12 lg:py-24">
+    <section id="details" class="w-full bg-white/50 py-12 lg:py-24">
         <x-layouts.inner>
             <x-headings.hero class="text-center">Party Details</x-headings.hero>
 
-            <div class="mx-auto flex max-w-lg flex-col divide-y divide-green-dark/30 text-center">
+            <div class="divide-green-dark/30 mx-auto flex max-w-lg flex-col divide-y text-center">
                 <div class="flex flex-col gap-4 py-8">
                     <div class="flex flex-col">
                         @if ($party)
@@ -41,34 +41,12 @@
                         <address>6661 Green Park Drive, Dayton OH 45459</address>
                     </div>
                 </div>
-                <div class="py-8 italic">
-                    <div
-                        class="inline-flex rounded-full border border-orange-600 bg-orange-500 px-2 py-1 text-xs font-bold uppercase text-orange-900">
-                        Updated: June 25th
-                    </div>
-                    <div class="mt-1 text-xl font-bold text-green-dark/70">
-                        <span>-</span>
-                        <span class="text-xl font-bold">Featuring</span>
-                        <span>-</span>
-                    </div>
-
-                    <h2 class="mt-2 text-3xl font-black">
-                        <span class="whitespace-nowrap">Claybourne Grille</span>
-                    </h2>
-                    <p>Serving from 5:30pm to 8pm</p>
-                    <p class="mt-2 text-sm">Note: The Food Pitt™ was no longer able to do our party, but Claybourne
-                        Grill jumped
-                        in to save
-                        the day. Thank you Robin!</p>
-                    <p class="mt-2 text-sm">They have a larger menu. Click below to see their menu and prices</p>
-                    <div class="mt-4">
-                        <a href="{{ route('menu') }}"
-                            class="inline-flex items-center justify-center rounded-sm bg-green px-4 py-2 text-lg font-bold italic text-green-dark shadow-xs transition-all duration-300 hover:scale-[102%] hover:shadow-lg">
-                            Menu & Prices
-                        </a>
-                    </div>
-                    {{-- <span>Bring cash or card for payment</span> --}}
-
+                <div class="flex flex-col items-center gap-2 py-8 italic">
+                    <p>
+                        Details are still coming together for this year's party but we plan to have food, drinks, and
+                        games
+                        again.
+                    </p>
                 </div>
                 <div class="flex flex-col gap-4 py-8">
 
@@ -97,7 +75,7 @@
             </div>
         </x-layouts.inner>
     </section>
-    <section id="rsvp" class="w-full py-12 lg:py-24">
+    <section id="rsvp" class="w-full bg-white/90 py-12 lg:py-24">
         <x-headings.hero class="text-center">RSVP</x-headings.hero>
         <x-layouts.inner class="max-w-5xl">
             <livewire:rsvp-form />

@@ -28,25 +28,21 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body id="top" x-data="{
-    isScrolled: false
-}" class="bg-green font-sans text-green-dark antialiased">
+<body id="top"
+    x-data="{ isScrolled: false }"
+    class="bg-green text-green-dark font-sans antialiased">
 
-    <nav :class="isScrolled ? ' shadow-lg' : ''" class="fixed top-0 z-20 w-full bg-white px-4 py-3 transition-all">
-        <div class="mx-auto flex h-full max-w-lg items-center justify-center gap-4">
+    <nav :class="isScrolled ? 'shadow-lg grid-rows-[1fr] py-3' : ' grid-rows-[0fr]'"
+        class="fixed top-0 z-20 grid w-full bg-white/80 px-4 backdrop-blur-sm transition-[grid-template-rows] transition-all duration-300 ease-out">
+        <div class="mx-auto flex h-full min-h-0 max-w-lg items-center justify-center gap-4 overflow-hidden">
             <a href="{{ route('welcome') }}#top" x-transition :class="isScrolled ? 'flex' : 'hidden'" class="">
                 <x-logo class="size-20 lg:size-24" />
             </a>
-            <a href="{{ route('welcome') }}#details"
-                class="rounded-full px-4 py-2 text-lg font-bold italic text-green hover:bg-green/10">
-                <div class="flex items-center gap-1">
-                    <span>Details</span>
-                    <span class="flex size-2 rounded-full border border-orange-600 bg-orange-500"></span>
-                </div>
+            <a href="{{ route('welcome') }}#details">
+                <x-navigation.item>Details</x-navigation.item>
             </a>
-            <a href="{{ route('welcome') }}#rsvp"
-                class="rounded-full px-4 py-2 text-lg font-bold italic text-green hover:bg-green/10">
-                RSVP
+            <a href="{{ route('welcome') }}#rsvp">
+                <x-navigation.item>RSVP</x-navigation.item>
             </a>
         </div>
     </nav>
