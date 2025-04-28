@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use Filament\Forms;
 use App\Models\Rsvp;
 use App\Models\User;
+use App\Models\Party;
 use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
@@ -14,11 +15,27 @@ use App\Filament\Resources\RsvpResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\RsvpResource\RelationManagers;
 use Filament\Tables\Columns\BooleanColumn;
+use Livewire\Attributes\On;
+
 class RsvpResource extends Resource
 {
     protected static ?string $model = Rsvp::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    public ?int $selectedPartyId = null;
+
+    public function mount(): void
+    {
+        $this->selectedPartyId = Party::where('is_active', true)->first()?->id 
+            ?? Party::latest('primary_date_start')->first()?->id;
+    }
+
+    #[On('party-selected')]
+    public function updateSelectedParty($partyId): void
+    {
+        $this->selectedPartyId = $partyId;
+    }
 
     public static function form(Form $form): Form
     {
@@ -47,6 +64,10 @@ class RsvpResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->when(
+                Party::where('is_active', true)->exists(),
+                fn ($q) => $q->whereHas('party', fn ($q) => $q->where('is_active', true))
+            ))
             ->columns([
                 Tables\Columns\TextColumn::make('deleted_at')
                     ->dateTime()
@@ -54,11 +75,6 @@ class RsvpResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('party.title')
                     ->sortable(),
-                // Tables\Columns\TextColumn::make('user.first_name')
-                //     ->sortable(),
-                // Tables\Columns\TextColumn::make('user.last_name')
-                //     ->sortable(),
-
                 Tables\Columns\TextColumn::make('user.first_name')
                     ->label('Full Name')
                     ->sortable()
@@ -104,7 +120,10 @@ class RsvpResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('party')
+                    ->relationship('party', 'title')
+                    ->multiple()
+                    ->preload(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

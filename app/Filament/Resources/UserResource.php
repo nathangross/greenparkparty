@@ -23,16 +23,20 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('username')
-                    ->maxLength(255),
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('first_name')
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->required(),
                 Forms\Components\TextInput::make('last_name')
                     ->maxLength(255),
-                Forms\Components\DateTimePicker::make('email_verified_at'),
+                Forms\Components\Toggle::make('is_organizer')
+                    ->label('Organizer')
+                    ->helperText('Organizers are excluded from RSVP statistics')
+                    ->default(false),
+                Forms\Components\DateTimePicker::make('email_verified_at')
+                    ->hiddenOn('create'),
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->maxLength(255),
@@ -48,14 +52,18 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('username')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('first_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('last_name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('is_organizer')
+                    ->label('Organizer')
+                    ->boolean()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('email_verified_at')
                     ->dateTime()
                     ->sortable(),
@@ -70,7 +78,8 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('phone')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('street')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //

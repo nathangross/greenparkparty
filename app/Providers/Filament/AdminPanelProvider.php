@@ -17,6 +17,10 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Filament\Widgets\OrganizerToggle;
+use App\Filament\Widgets\RsvpYearComparison;
+use App\Filament\Widgets\RsvpTrendChart;
+use App\Filament\Widgets\ActivePartySelector;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -37,8 +41,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                ActivePartySelector::class,
+                OrganizerToggle::class,
+                RsvpYearComparison::class,
+                RsvpTrendChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,
