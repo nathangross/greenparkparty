@@ -1,0 +1,38 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# RSVP Form Behavior
+
+The RSVP form is implemented as a Livewire Volt component with the following key behaviors:
+
+## Required Fields
+- `first_name` - Always required
+- `email` - Required if `receive_email_updates` is true
+- `phone` - Required if `receive_sms_updates` is true
+- `attending_count` - Required and must be positive when `showAttending` is true
+
+## Optional Fields
+- `last_name`
+- `street`
+- `message`
+- `volunteer` (boolean)
+
+## Message Handling
+When users update their RSVP with new messages, they are appended with prefixes:
+- First message: "New message: {message}"
+- Subsequent messages: "Message update: {message}"
+
+## Validation Rules
+1. Email must be valid format when provided
+2. Phone number must be valid format when provided
+3. Attending count must be non-negative
+4. RSVPs are only accepted when there is an active party
+
+## Update Behavior
+- Users are identified by email address for updates
+- Multiple submissions update the existing RSVP
+- All message history is preserved
+- Contact information (name, phone, email) is updated
+- Attendance count can be modified

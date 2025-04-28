@@ -1,0 +1,29 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Project Structure
+
+This is a Laravel application for managing party RSVPs. Here are the key components:
+
+## Core Components
+- [app/Models/Rsvp.php](mdc:app/Models/Rsvp.php) - RSVP model for handling party attendance
+- [app/Models/User.php](mdc:app/Models/User.php) - User model for attendee information
+- [app/Models/Party.php](mdc:app/Models/Party.php) - Party model for event details
+
+## Tests
+The test suite in [tests/Feature/RsvpTest.php](mdc:tests/Feature/RsvpTest.php) provides comprehensive coverage of RSVP functionality including:
+- Form submission validation
+- User creation and updates
+- RSVP message handling
+- Mailchimp integration for email updates
+- SMS updates handling
+
+## Key Features
+- Multiple RSVP submissions update existing records
+- Message history is preserved and appended
+- Email and SMS notification opt-in
+- Mailchimp integration for mailing list management
+- Volunteer tracking
+- Attendance counting

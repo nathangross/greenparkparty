@@ -1,0 +1,29 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Admin Panel
+
+The application uses Filament for its admin interface, providing a powerful dashboard for managing RSVPs and parties.
+
+## Resources
+- [app/Filament/Resources/RsvpResource.php](mdc:app/Filament/Resources/RsvpResource.php) - Manages RSVP entries
+- [app/Filament/Resources/PartyResource.php](mdc:app/Filament/Resources/PartyResource.php) - Manages party configurations
+- [app/Filament/Resources/UserResource.php](mdc:app/Filament/Resources/UserResource.php) - Manages user records
+
+## Widgets
+- [app/Filament/Widgets/RsvpCount.php](mdc:app/Filament/Widgets/RsvpCount.php) - Displays RSVP statistics
+
+## Key Features
+- Full CRUD operations for RSVPs, Parties, and Users
+- Stats overview widget for RSVP tracking
+- Resource relationships management
+- Form-based data entry and validation
+- Table-based data display with sorting and filtering
+
+## Access Control
+- Admin interface is protected by authentication
+- Users must implement the FilamentUser interface
+- Custom middleware stack for security
+- Configurable through [config/filament.php](mdc:config/filament.php)

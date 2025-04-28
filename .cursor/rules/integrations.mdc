@@ -1,0 +1,30 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# External Integrations
+
+The application integrates with external services for communication:
+
+## Mailchimp Integration
+- Users who opt-in for email updates are added to Mailchimp
+- Integration is fault-tolerant - RSVP submission succeeds even if Mailchimp fails
+- Configuration is managed through the Laravel Newsletter package
+- Users are only added when they provide an email address
+
+## SMS Updates
+- Users can opt-in for SMS updates
+- Phone number validation is enforced when SMS updates are requested
+- SMS integration is prepared but actual implementation may vary
+
+## Newsletter Configuration
+The newsletter configuration is managed through Laravel's config system:
+- API key configuration in environment variables
+- Graceful handling of missing or invalid configuration
+- Mailchimp list management through the Newsletter facade
+
+## Error Handling
+- Failed Mailchimp operations don't block RSVP submission
+- Invalid configurations are handled gracefully
+- Missing API keys or configuration issues are logged but don't affect core functionality
