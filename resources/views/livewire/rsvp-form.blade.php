@@ -5,6 +5,8 @@ use App\Models\Rsvp;
 use App\Models\User;
 use App\Services\PartyService;
 use Illuminate\Support\Facades\DB;
+use Spatie\Newsletter\Facades\Newsletter;
+use Illuminate\Support\Facades\Log;
 
 // Inject the PartyService
 $partyService = app(PartyService::class);
@@ -34,7 +36,7 @@ rules([
     'email' => 'nullable|required_if:receive_email_updates,true|email',
     'phone' => 'nullable|required_if:receive_sms_updates,true|min:10',
     'street' => 'nullable',
-    'attending_count' => 'required|numeric',
+    'attending_count' => 'required_if:showAttending,true|numeric|min:0',
     'volunteer' => 'nullable|boolean',
     'message' => 'nullable|max:255',
     'receive_email_updates' => 'nullable|boolean',
@@ -51,14 +53,20 @@ $save = function () {
 
     DB::transaction(function () {
         $user = User::updateOrCreate(
-            ['email' => $this->email],
+            ['email' => $this->email ?: null],
             [
                 'first_name' => $this->first_name,
                 'last_name' => $this->last_name,
                 'phone' => $this->phone,
                 'street' => $this->street,
+                'email' => $this->email ?: null,
             ],
         );
+
+        // Set attending_count to 0 if not attending
+        if (!$this->showAttending) {
+            $this->attending_count = 0;
+        }
 
         Rsvp::create([
             'user_id' => $user->id,
@@ -69,12 +77,90 @@ $save = function () {
             'receive_email_updates' => $this->receive_email_updates,
             'receive_sms_updates' => $this->receive_sms_updates,
         ]);
+
+        // Update Mailchimp contact if email is provided and they've opted in for updates
+        if ($this->email && ($this->receive_email_updates || $this->receive_sms_updates)) {
+            try {
+                // Get the Mailchimp API instance
+                $mailchimp = Newsletter::getApi();
+                $listId = config('newsletter.lists.subscribers.id');
+
+                Log::info('Mailchimp configuration', [
+                    'api_key' => substr(config('newsletter.driver_arguments.api_key'), 0, 5) . '...',
+                    'list_id' => $listId,
+                    'endpoint' => config('newsletter.driver_arguments.endpoint'),
+                ]);
+
+                // Try to get the subscriber first
+                $subscriberHash = md5(strtolower($this->email));
+                try {
+                    $existingSubscriber = $mailchimp->get("lists/{$listId}/members/{$subscriberHash}");
+                    Log::info('Found existing subscriber', ['subscriber' => $existingSubscriber]);
+                } catch (\Exception $e) {
+                    Log::info('No existing subscriber found', ['error' => $e->getMessage()]);
+                }
+
+                // Subscribe or update the contact
+                $result = Newsletter::subscribeOrUpdate($this->email, [
+                    'FNAME' => $this->first_name,
+                    'LNAME' => $this->last_name,
+                    'PHONE' => $this->phone,
+                ]);
+
+                Log::info('Mailchimp subscribe result', ['result' => $result]);
+
+                if (!$result) {
+                    // Get the last error from Mailchimp
+                    $lastError = $mailchimp->getLastError();
+                    $lastResponse = $mailchimp->getLastResponse();
+                    Log::error('Mailchimp error details', [
+                        'error' => $lastError,
+                        'response' => $lastResponse,
+                        'request' => $mailchimp->getLastRequest(),
+                    ]);
+                    throw new \Exception('Failed to subscribe to Mailchimp: ' . json_encode($lastError));
+                }
+
+                // Add tags based on preferences
+                $tags = [
+                    [
+                        'name' => $this->partyYear . ' - Attending',
+                        'status' => $this->attending_count > 0 ? 'active' : 'inactive',
+                    ],
+                    [
+                        'name' => $this->partyYear . ' - Volunteer',
+                        'status' => $this->volunteer ? 'active' : 'inactive',
+                    ],
+                    [
+                        'name' => $this->partyYear . ' - SMS Updates',
+                        'status' => $this->receive_sms_updates ? 'active' : 'inactive',
+                    ],
+                ];
+
+                Log::info('Attempting to add Mailchimp tags', [
+                    'email' => $this->email,
+                    'tags' => $tags,
+                ]);
+
+                $tagResult = $mailchimp->post("lists/{$listId}/members/{$subscriberHash}/tags", [
+                    'tags' => $tags,
+                ]);
+
+                Log::info('Mailchimp tag result', ['result' => $tagResult]);
+            } catch (\Exception $e) {
+                Log::error('Failed to update Mailchimp contact: ' . $e->getMessage(), [
+                    'email' => $this->email,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
+        }
     });
 
     if ($this->attending_count > 0) {
         $message = "Thanks {$this->first_name}, we have you down for {$this->attending_count}. We'll see you there!";
     } else {
-        $message = "Thanks for letting us know {$this->first_name}. Hope to see you next year!";
+        $message = "Thanks for letting us know, {$this->first_name}. We hope to see you next year!";
     }
     session()->flash('message', $message);
     $this->dispatch('flash-message');

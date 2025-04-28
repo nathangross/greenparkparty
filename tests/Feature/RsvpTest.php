@@ -5,12 +5,19 @@ use App\Models\User;
 use App\Models\Party;
 use Livewire\Volt\Volt;
 use Tests\Feature\Traits\WithViewComposer;
+use Tests\Feature\Traits\WithNewsletterMock;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Spatie\Newsletter\Facades\Newsletter;
 
 uses(RefreshDatabase::class);
 uses(WithViewComposer::class);
+uses(WithNewsletterMock::class);
+
+beforeEach(function () {
+    $this->setUpNewsletterMock();
+});
 
 test('true is true', function () {
     expect(true)->toBeTrue();
@@ -185,7 +192,7 @@ test('success message is correct when user RSVPs as not attending', function () 
         ->set('attending_count', 0)
         ->call('save')
         ->assertDispatched('flash-message')
-        ->assertSee('Thanks for letting us know Alice. Hope to see you next year!');
+        ->assertSee('Thanks for letting us know, Alice. We hope to see you next year!');
 
     expect(Rsvp::where('attending_count', 0)->exists())->toBeTrue();
 });
@@ -250,4 +257,93 @@ test('attending count must be valid when attending', function () {
         ->set('attending_count', null)  // Required when attending
         ->call('save')
         ->assertHasErrors(['attending_count']);
+});
+
+test('user is added to mailchimp when opting in for email updates', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    Volt::test('rsvp-form')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'john@example.com')
+        ->set('showAttending', true)
+        ->set('attending_count', 2)
+        ->set('receive_email_updates', true)
+        ->set('receive_sms_updates', false)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Verify the user was added to Mailchimp
+    $this->assertDatabaseHas('users', [
+        'first_name' => 'John',
+        'email' => 'john@example.com',
+    ]);
+});
+
+test('user is added to mailchimp when opting in for sms updates', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    Volt::test('rsvp-form')
+        ->set('first_name', 'Jane')
+        ->set('last_name', 'Smith')
+        ->set('email', 'jane@example.com')
+        ->set('phone', '123-456-7890')
+        ->set('showAttending', true)
+        ->set('attending_count', 1)
+        ->set('receive_email_updates', false)
+        ->set('receive_sms_updates', true)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Verify the user was added to Mailchimp
+    $this->assertDatabaseHas('users', [
+        'first_name' => 'Jane',
+        'email' => 'jane@example.com',
+    ]);
+});
+
+test('user is not added to mailchimp when not opting in for updates', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    Volt::test('rsvp-form')
+        ->set('first_name', 'Bob')
+        ->set('last_name', 'Johnson')
+        ->set('email', 'bob@example.com')
+        ->set('showAttending', true)
+        ->set('attending_count', 1)
+        ->set('receive_email_updates', false)
+        ->set('receive_sms_updates', false)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Verify the user exists but wasn't added to Mailchimp
+    $this->assertDatabaseHas('users', [
+        'first_name' => 'Bob',
+        'email' => 'bob@example.com',
+    ]);
+});
+
+test('user is not added to mailchimp when no email is provided', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    Volt::test('rsvp-form')
+        ->set('first_name', 'Alice')
+        ->set('last_name', 'Brown')
+        ->set('email', null)  // Explicitly set email to null
+        ->set('showAttending', true)
+        ->set('attending_count', 1)
+        ->set('receive_email_updates', false)  // Set to false since we have no email
+        ->set('receive_sms_updates', false)    // Set to false since we have no phone
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Verify the user exists but wasn't added to Mailchimp
+    $this->assertDatabaseHas('users', [
+        'first_name' => 'Alice',
+        'email' => null,
+    ]);
 });
