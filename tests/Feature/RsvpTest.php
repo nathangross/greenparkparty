@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Newsletter\Facades\Newsletter;
+use Illuminate\Support\Facades\Config;
+use Carbon\Carbon;
 
 uses(RefreshDatabase::class);
 uses(WithViewComposer::class);
@@ -47,12 +49,14 @@ test('a user can submit an RSVP form', function () {
         ->where('email', 'john@example.com')
         ->exists())->toBeTrue();
 
-    expect(Rsvp::where('attending_count', 2)
+    $rsvp = Rsvp::where('attending_count', 2)
         ->where('volunteer', 1)
-        ->where('message', 'I am a guest of honor.')
         ->where('receive_email_updates', 1)
         ->where('receive_sms_updates', 0)
-        ->exists())->toBeTrue();
+        ->first();
+
+    expect($rsvp)->not->toBeNull();
+    expect($rsvp->message)->toBe('New message: I am a guest of honor. ');
 });
 
 test('validation errors are shown for invalid input', function () {
@@ -229,8 +233,9 @@ test('existing user is updated when RSVPing again', function () {
     expect($user->first_name)->toBe('Johnny');
     expect($user->phone)->toBe('098-765-4321');
 
-    // Should have two RSVPs
-    expect(Rsvp::where('user_id', $user->id)->count())->toBe(2);
+    // Should have one RSVP with updated information
+    $rsvp = Rsvp::where('user_id', $user->id)->first();
+    expect($rsvp->attending_count)->toBe(1);
 });
 
 test('attending count must be valid when attending', function () {
@@ -346,4 +351,132 @@ test('user is not added to mailchimp when no email is provided', function () {
         'first_name' => 'Alice',
         'email' => null,
     ]);
+});
+
+test('rsvp is updated when user RSVPs for the same party again', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    // First RSVP
+    Volt::test('rsvp-form')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Smith')
+        ->set('email', 'john@example.com')
+        ->set('phone', '123-456-7890')
+        ->set('showAttending', true)
+        ->set('attending_count', 2)
+        ->set('message', 'First RSVP')
+        ->call('save');
+
+    // Second RSVP with updated information
+    Volt::test('rsvp-form')
+        ->set('first_name', 'Johnny')  // Changed name
+        ->set('last_name', 'Smith')
+        ->set('email', 'john@example.com')  // Same email
+        ->set('phone', '098-765-4321')  // Changed phone
+        ->set('showAttending', true)
+        ->set('attending_count', 1)  // Changed count
+        ->set('message', 'Updated RSVP')  // New message
+        ->call('save');
+
+    // Should only have one user
+    expect(User::where('email', 'john@example.com')->count())->toBe(1);
+    
+    // User should have updated information
+    $user = User::where('email', 'john@example.com')->first();
+    expect($user->first_name)->toBe('Johnny');
+    expect($user->phone)->toBe('098-765-4321');
+
+    // Should have one RSVP with updated information
+    $rsvp = Rsvp::where('user_id', $user->id)->first();
+    expect($rsvp->attending_count)->toBe(1);
+    expect($rsvp->message)->toBe("New message: First RSVP \n\nMessage update: Updated RSVP ");
+});
+
+test('rsvp is saved even when mailchimp is not configured', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    // Set invalid Mailchimp configuration to force failure
+    Config::set('newsletter.driver_arguments.api_key', 'invalid-key');
+
+    Volt::test('rsvp-form')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'test@example.com')
+        ->set('phone', '123-456-7890')
+        ->set('showAttending', true)
+        ->set('attending_count', 2)
+        ->set('receive_email_updates', true)
+        ->set('receive_sms_updates', true)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Verify the user was created
+    $this->assertDatabaseHas('users', [
+        'first_name' => 'John',
+        'email' => 'test@example.com',
+    ]);
+
+    // Verify the RSVP was created
+    $user = User::where('email', 'test@example.com')->first();
+    $this->assertDatabaseHas('rsvps', [
+        'user_id' => $user->id,
+        'attending_count' => 2,
+    ]);
+});
+
+test('rsvp messages are appended when updating', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    // First RSVP with a message
+    Volt::test('rsvp-form')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Smith')
+        ->set('email', 'john@example.com')
+        ->set('showAttending', true)
+        ->set('attending_count', 2)
+        ->set('message', 'I am a guest of honor.')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Second RSVP with a new message
+    Volt::test('rsvp-form')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Smith')
+        ->set('email', 'john@example.com')
+        ->set('showAttending', true)
+        ->set('attending_count', 3)
+        ->set('message', 'I am bringing cookies!')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Third RSVP with no message
+    Volt::test('rsvp-form')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Smith')
+        ->set('email', 'john@example.com')
+        ->set('showAttending', true)
+        ->set('attending_count', 4)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Fourth RSVP with another message
+    Volt::test('rsvp-form')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Smith')
+        ->set('email', 'john@example.com')
+        ->set('showAttending', true)
+        ->set('attending_count', 5)
+        ->set('message', 'I am bringing a friend!')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Get the final RSVP
+    $user = User::where('email', 'john@example.com')->first();
+    $rsvp = Rsvp::where('user_id', $user->id)->first();
+
+    // Verify the message format
+    expect($rsvp->message)->toBe("New message: I am a guest of honor. \n\nMessage update: I am bringing cookies! \n\nMessage update: I am bringing a friend! ");
 });

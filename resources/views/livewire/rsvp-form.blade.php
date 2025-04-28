@@ -7,6 +7,7 @@ use App\Services\PartyService;
 use Illuminate\Support\Facades\DB;
 use Spatie\Newsletter\Facades\Newsletter;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 // Inject the PartyService
 $partyService = app(PartyService::class);
@@ -52,6 +53,12 @@ $save = function () {
     $this->validate();
 
     DB::transaction(function () {
+        // Set attending_count to 0 if not attending
+        if (!$this->showAttending) {
+            $this->attending_count = 0;
+        }
+
+        // Find or create the user
         $user = User::updateOrCreate(
             ['email' => $this->email ?: null],
             [
@@ -63,20 +70,33 @@ $save = function () {
             ],
         );
 
-        // Set attending_count to 0 if not attending
-        if (!$this->showAttending) {
-            $this->attending_count = 0;
+        // Find existing RSVP if any
+        $existingRsvp = Rsvp::where('user_id', $user->id)->where('party_id', $this->activeParty->id)->first();
+
+        // Combine messages if both exist
+        $message = $this->message;
+        if ($message && $existingRsvp?->message) {
+            $message = $existingRsvp->message . "\n\nMessage update: " . $message . ' ';
+        } elseif ($message) {
+            $message = 'New message: ' . $message . ' ';
+        } elseif (!$message) {
+            $message = $existingRsvp?->message;
         }
 
-        Rsvp::create([
-            'user_id' => $user->id,
-            'party_id' => $this->activeParty->id,
-            'attending_count' => $this->attending_count,
-            'volunteer' => $this->volunteer,
-            'message' => $this->message,
-            'receive_email_updates' => $this->receive_email_updates,
-            'receive_sms_updates' => $this->receive_sms_updates,
-        ]);
+        // Update or create the RSVP
+        Rsvp::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'party_id' => $this->activeParty->id,
+            ],
+            [
+                'attending_count' => $this->attending_count,
+                'volunteer' => $this->volunteer,
+                'message' => $message,
+                'receive_email_updates' => $this->receive_email_updates,
+                'receive_sms_updates' => $this->receive_sms_updates,
+            ],
+        );
 
         // Update Mailchimp contact if email is provided and they've opted in for updates
         if ($this->email && ($this->receive_email_updates || $this->receive_sms_updates)) {
@@ -118,6 +138,13 @@ $save = function () {
                         'response' => $lastResponse,
                         'request' => $mailchimp->getLastRequest(),
                     ]);
+
+                    // Check if this is a permanently deleted contact
+                    if (str_contains($lastError, 'permanently deleted and cannot be re-imported')) {
+                        $this->dispatch('flash-error', 'Your email was previously unsubscribed. Please contact us to re-subscribe.');
+                        return;
+                    }
+
                     throw new \Exception('Failed to subscribe to Mailchimp: ' . json_encode($lastError));
                 }
 
@@ -153,6 +180,12 @@ $save = function () {
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                 ]);
+
+                // Check if this is a permanently deleted contact
+                if (str_contains($e->getMessage(), 'permanently deleted and cannot be re-imported')) {
+                    $this->dispatch('flash-error', 'Your email was previously unsubscribed. Please contact us to re-subscribe.');
+                    return;
+                }
             }
         }
     });

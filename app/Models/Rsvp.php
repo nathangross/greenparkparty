@@ -22,6 +22,10 @@ class Rsvp extends Model
         'id' => 'integer',
         'party_id' => 'integer',
         'user_id' => 'integer',
+        'attending_count' => 'integer',
+        'volunteer' => 'boolean',
+        'receive_email_updates' => 'boolean',
+        'receive_sms_updates' => 'boolean',
     ];
 
     public function party(): BelongsTo
