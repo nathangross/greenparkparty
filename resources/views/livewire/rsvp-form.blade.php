@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Spatie\Newsletter\Facades\Newsletter;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use App\Notifications\RsvpConfirmation;
+use Illuminate\Support\Facades\App;
 
 // Inject the PartyService
 $partyService = app(PartyService::class);
@@ -84,7 +86,7 @@ $save = function () {
         }
 
         // Update or create the RSVP
-        Rsvp::updateOrCreate(
+        $rsvp = Rsvp::updateOrCreate(
             [
                 'user_id' => $user->id,
                 'party_id' => $this->activeParty->id,
@@ -98,8 +100,29 @@ $save = function () {
             ],
         );
 
+        // Send RSVP confirmation email if email is provided
+        if ($this->email) {
+            Log::info('Attempting to send RSVP confirmation email', [
+                'email' => $this->email,
+                'user_id' => $user->id,
+                'rsvp_id' => $rsvp->id,
+            ]);
+            try {
+                dispatch(function () use ($user, $rsvp) {
+                    $user->notify(new RsvpConfirmation($rsvp));
+                })->afterResponse();
+                Log::info('RSVP confirmation email queued successfully');
+            } catch (\Exception $e) {
+                Log::error('Failed to send RSVP confirmation email', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
+        }
+
         // Update Mailchimp contact if email is provided and they've opted in for updates
-        if ($this->email && ($this->receive_email_updates || $this->receive_sms_updates)) {
+        // Skip Mailchimp integration in local environment
+        if (!App::environment('local') && $this->email && ($this->receive_email_updates || $this->receive_sms_updates)) {
             try {
                 // Get the Mailchimp API instance
                 $mailchimp = Newsletter::getApi();
