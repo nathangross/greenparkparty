@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\RsvpResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\RsvpResource\RelationManagers;
-
+use Filament\Tables\Columns\BooleanColumn;
 class RsvpResource extends Resource
 {
     protected static ?string $model = Rsvp::class;
@@ -66,17 +66,39 @@ class RsvpResource extends Resource
                         return $record->user->first_name . ' ' . $record->user->last_name;
                     }),
                 Tables\Columns\TextColumn::make('attending_count')
+                    ->label('Attending')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('volunteer')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('message')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\IconColumn::make('has_message')
+                    ->label('Message')
+                    ->boolean()
+                    ->getStateUsing(fn ($record) => !empty($record->message))
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+                Tables\Columns\IconColumn::make('receive_email_updates')
+                    ->label('Can Email')
+                    ->boolean()
+                    ->getStateUsing(fn ($record) => $record->receive_email_updates)
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+                Tables\Columns\IconColumn::make('receive_sms_updates')
+                    ->label('Can Text')
+                    ->boolean()
+                    ->getStateUsing(fn ($record) => $record->receive_sms_updates)
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Created')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Updated')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

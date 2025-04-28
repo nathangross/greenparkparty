@@ -27,4 +27,15 @@ class Party extends Model
     {
         return $this->hasMany(Rsvp::class);  // Assuming 'Rsvp' is the model name
     }
+
+    /**
+     * Get the RSVP deadline for this party.
+     * The deadline is set to 2 weeks before the party start date.
+     *
+     * @return \Carbon\Carbon
+     */
+    public function getRsvpDeadline()
+    {
+        return $this->primary_date_start->subWeeks(2);
+    }
 }

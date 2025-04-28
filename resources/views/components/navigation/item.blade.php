@@ -1,5 +1,10 @@
-@props(['flag' => false])
-<div class="text-green hover:bg-green/10 rounded-full px-4 py-2 text-lg font-bold italic">
+@props(['flag' => false, 'dark' => false])
+<div
+    {{ $attributes->merge()->class([
+            'text-green-dark rounded-full px-4 py-2 text-lg font-bold italic',
+            'hover:bg-green/10' => !$dark,
+            'hover:bg-green-dark/10' => $dark,
+        ]) }}>
     <div class="flex items-center gap-1">
         <span>{{ $slot }}</span>
         @if ($flag)

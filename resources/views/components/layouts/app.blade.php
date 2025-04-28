@@ -46,6 +46,16 @@
             </a>
         </div>
     </nav>
+    <nav class="py-8">
+        <div class="flex items-center justify-center gap-4">
+            <a href="{{ route('welcome') }}#details">
+                <x-navigation.item dark>Details</x-navigation.item>
+            </a>
+            <a href="{{ route('welcome') }}#rsvp">
+                <x-navigation.item dark>RSVP</x-navigation.item>
+            </a>
+        </div>
+    </nav>
     <div class="mt-16 flex min-h-screen w-full flex-col items-center justify-center">
         <div x-intersect:leave="isScrolled = true" x-intersect:enter="isScrolled = false"></div>
         {{ $slot }}

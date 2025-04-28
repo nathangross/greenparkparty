@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Columns\BooleanColumn;
 
 class PartyResource extends Resource
 {
@@ -41,6 +42,9 @@ class PartyResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('title')
                     ->searchable(),
+                Tables\Columns\BooleanColumn::make('is_active')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('primary_date_start')
                     ->dateTime()
                     ->sortable(),

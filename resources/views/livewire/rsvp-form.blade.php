@@ -1,69 +1,204 @@
-<div class="flex w-full flex-col @container">
+<?php
 
+use function Livewire\Volt\{state, rules, computed, usesProperties};
+use App\Models\Rsvp;
+use App\Models\User;
+use App\Services\PartyService;
+use Illuminate\Support\Facades\DB;
+
+// Inject the PartyService
+$partyService = app(PartyService::class);
+
+state([
+    'first_name' => '',
+    'last_name' => '',
+    'email' => '',
+    'phone' => '',
+    'street' => '',
+    'showAttending' => true,
+    'attending_count' => 1,
+    'volunteer' => false,
+    'message' => '',
+    'showForm' => true,
+    'receive_email_updates' => false,
+    'receive_sms_updates' => false,
+]);
+
+$activeParty = computed(fn() => $partyService->getActiveParty());
+$partyYear = computed(fn() => $partyService->getCurrentPartyYear());
+$isAcceptingRsvps = computed(fn() => $partyService->isAcceptingRsvps());
+
+rules([
+    'first_name' => 'required|min:3',
+    'last_name' => 'nullable|min:3',
+    'email' => 'nullable|required_if:receive_email_updates,true|email',
+    'phone' => 'nullable|required_if:receive_sms_updates,true|min:10',
+    'street' => 'nullable',
+    'attending_count' => 'required|numeric',
+    'volunteer' => 'nullable|boolean',
+    'message' => 'nullable|max:255',
+    'receive_email_updates' => 'nullable|boolean',
+    'receive_sms_updates' => 'nullable|boolean',
+]);
+
+$save = function () {
+    if (!$this->isAcceptingRsvps) {
+        $this->dispatch('flash-error', 'RSVPs are not currently open.');
+        return;
+    }
+
+    $this->validate();
+
+    DB::transaction(function () {
+        $user = User::updateOrCreate(
+            ['email' => $this->email],
+            [
+                'first_name' => $this->first_name,
+                'last_name' => $this->last_name,
+                'phone' => $this->phone,
+                'street' => $this->street,
+            ],
+        );
+
+        Rsvp::create([
+            'user_id' => $user->id,
+            'party_id' => $this->activeParty->id,
+            'attending_count' => $this->attending_count,
+            'volunteer' => $this->volunteer,
+            'message' => $this->message,
+            'receive_email_updates' => $this->receive_email_updates,
+            'receive_sms_updates' => $this->receive_sms_updates,
+        ]);
+    });
+
+    if ($this->attending_count > 0) {
+        $message = "Thanks {$this->first_name}, we have you down for {$this->attending_count}. We'll see you there!";
+    } else {
+        $message = "Thanks for letting us know {$this->first_name}. Hope to see you next year!";
+    }
+    session()->flash('message', $message);
+    $this->dispatch('flash-message');
+    $this->showForm = false;
+};
+
+$generateUniqueIdentifier = function () {
+    return 'no_email_user_' . md5($this->first_name . $this->last_name . $this->phone . now()->timestamp);
+};
+
+?>
+
+<div class="@container flex w-full flex-col">
     @if ($showForm)
-        <form wire:submit.prevent="save">
+        <form wire:submit="save">
             @csrf
             @method('post')
-            <div class="flex w-full flex-col gap-8 @container">
-                <x-forms.fieldset legend="Your Information">
-                    <div class="grid gap-4 @xl:grid-cols-2">
-                        <div class="flex w-full flex-col gap-1">
-                            <x-input.label for="first_name">First Name </x-input.label>
-                            <x-input type="text" name="first_name" wire:model="first_name" required />
-                        </div>
-                        <div class="flex w-full flex-col gap-1">
-                            <x-input.label for="last_name">Last Name <span class="text-sm text-gray-700">(optional)</span></x-input.label>
-                            <x-input type="text" name="last_name" wire:model="last_name" />
-                        </div>
+
+            <div class="@container flex w-full flex-col gap-8">
+                <x-headings.hero class="text-center">
+                    @if ($this->partyYear)
+                        {{ $this->partyYear }} RSVP
+                    @else
+                        RSVP
+                    @endif
+                </x-headings.hero>
+                @if ($errors->any())
+                    <div class="mb-4 text-red-600">
+                        See below for errors.
                     </div>
-                </x-forms.fieldset>
-                <x-forms.fieldset legend="Will you be attending?">
+                @endif
+
+                @if (!$this->isAcceptingRsvps)
+                    <div class="text-center text-xl">
+                        RSVPs are not currently open.
+                    </div>
+                @else
+                    <x-forms.fieldset legend="Your Information">
+                        <div class="@xl:grid-cols-2 grid gap-4">
+                            <div class="flex w-full flex-col gap-1">
+                                <x-input.label for="first_name">First Name </x-input.label>
+                                <x-input type="text" name="first_name" wire:model="first_name" required />
+                                @error('first_name')
+                                    <div class="mt-1 text-sm text-red-600">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="flex w-full flex-col gap-1">
+                                <x-input.label for="last_name">Last Name <span
+                                        class="text-sm text-gray-700">(optional)</span></x-input.label>
+                                <x-input type="text" name="last_name" wire:model="last_name" />
+                                @error('last_name')
+                                    <div class="mt-1 text-sm text-red-600">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </x-forms.fieldset>
+                @endif
+                <x-forms.fieldset
+                    legend="Will you be attending this year?">
                     <div x-data="{ showAttending: @entangle('showAttending') }">
                         <div class="flex flex-col gap-8">
                             <div class="mt-4 grid gap-8 lg:grid-cols-2">
-                                <label for="attending_yes" class="flex items-center gap-2 rounded-full bg-green-dark/10 px-4 py-2">
-                                    <input type="radio" id="attending_yes" name="showAttending" value="1" x-model="showAttending" wire:model="showAttending">
+                                <label for="attending_yes"
+                                    class="bg-green-dark/10 flex items-center gap-2 rounded-full px-4 py-2">
+                                    <input type="radio" id="attending_yes" name="showAttending" value="1"
+                                        x-model="showAttending" wire:model="showAttending">
                                     <span class="text-lg font-bold">Yes!</span>
                                 </label>
-                                <label for="attending_no" class="flex items-center gap-2 rounded-full bg-green-dark/10 px-4 py-2">
-                                    <input type="radio" id="attending_no" name="showAttending" value="0" x-model="showAttending" wire:model="showAttending">
+                                <label for="attending_no"
+                                    class="bg-green-dark/10 flex items-center gap-2 rounded-full px-4 py-2">
+                                    <input type="radio" id="attending_no" name="showAttending" value="0"
+                                        x-model="showAttending" wire:model="showAttending">
                                     <span class="text-lg font-bold">No</span>
                                 </label>
                             </div>
                             <div x-show="showAttending == true" class="">
-                                <!-- This input shows only if attending is true -->
-
                                 <div class="grid gap-8">
                                     <div class="flex flex-col gap-1">
-                                        <x-input.label for="attending_count">Including yourself, how many will be attending?</x-input.label>
-                                        <x-input type="number" id="attending_count" name="attending_count" wire:model="attending_count" />
+                                        <x-input.label for="attending_count">
+                                            Including yourself, how many will be attending?
+                                        </x-input.label>
+                                        <x-input type="number" id="attending_count" name="attending_count"
+                                            wire:model="attending_count" />
+                                        @error('attending_count')
+                                            <div class="mt-1 text-sm text-red-600">{{ $message }}</div>
+                                        @enderror
                                     </div>
                                     <div class="flex flex-col">
                                         <div class="flex items-baseline gap-2">
-                                            <input type="checkbox" id="volunteer" name="volunteer" wire:model="volunteer">
-                                            <x-input.label for="volunteer">Check if you are interested in volunteering</x-input.label>
+                                            <input type="checkbox" id="volunteer" name="volunteer"
+                                                wire:model="volunteer">
+                                            <x-input.label for="volunteer">
+                                                Check if you are interested in volunteering
+                                            </x-input.label>
                                         </div>
-                                        <p class="text-balance mt-1 text-gray-700">Since this is our first year, we're not sure yet how many volunteers we'll need. We'll probably need a few volunteers to help us get things set up and cleaned up when it's over.</p>
+                                        <p class="ml-6 mt-1 text-balance text-sm italic text-gray-700">Our volunteer
+                                            needs will
+                                            be
+                                            based on
+                                            how many people RSVP as attending. We'll be in touch as we get closer to the
+                                            party.</p>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
-
                     </div>
                 </x-forms.fieldset>
 
                 <x-forms.fieldset legend="Optional Information" description="Share as much or as little as you'd like.">
-
                     <div class="grid gap-4">
-                        <div class="mt-2 grid gap-4 @xl:grid-cols-3">
+                        <div class="@xl:grid-cols-3 mt-2 grid gap-4">
                             <div class="flex w-full flex-col gap-1">
                                 <x-input.label for="email">Email</x-input.label>
                                 <x-input type="email" name="email" wire:model="email" />
+                                @error('email')
+                                    <div class="mt-1 text-sm text-red-600">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="flex w-full flex-col gap-1">
                                 <x-input.label for="phone">Cell Phone</x-input.label>
                                 <x-input type="tel" name="phone" wire:model="phone" />
+                                @error('phone')
+                                    <div class="mt-1 text-sm text-red-600">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="flex w-full flex-col gap-1">
                                 <x-input.label for="street">Street</x-input.label>
@@ -71,27 +206,67 @@
                             </div>
                         </div>
 
+                        <div class="mt-2 flex items-center gap-2">
+                            <input type="checkbox" id="receive_email_updates" name="receive_email_updates"
+                                wire:model="receive_email_updates">
+                            <x-input.label for="receive_email_updates">
+                                I'm ok to receive email updates about the party
+                            </x-input.label>
+                        </div>
+                        <div class="mt-2 flex items-center gap-2">
+                            <input type="checkbox" id="receive_sms_updates" name="receive_sms_updates"
+                                wire:model="receive_sms_updates">
+                            <x-input.label for="receive_sms_updates">
+                                I'm ok to receive SMS updates about the party
+                            </x-input.label>
+                        </div>
+
                         <div class="">
-                            <x-input.label for="message">Leave a note </x-input.label>
-                            <textarea name="message" id="message" class="mt-1 h-32 w-full rounded-lg border border-green-dark" wire:model="message"></textarea>
+                            <x-input.label for="message">Leave us a note </x-input.label>
+                            <textarea name="message" id="message" class="border-green-dark mt-1 h-32 w-full rounded-lg border"
+                                wire:model="message"></textarea>
+                            @error('message')
+                                <div class="mt-1 text-sm text-red-600">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </x-forms.fieldset>
 
                 <button class="rounded-md bg-black px-4 py-2 text-white" type="submit">Submit</button>
-
             </div>
         </form>
     @endif
 
     @if (session('error'))
-        <div class="bg-red-500/10 p-4 text-center font-bold text-red-800">
+        <x-card id="message-container"
+            x-data="{ show: true }"
+            x-show="show"
+            x-init="$nextTick(() => $el.scrollIntoView({ behavior: 'smooth', block: 'center' }))"
+            class="flex min-h-[400px] items-center justify-center bg-red-500/10 p-4 text-center font-bold text-red-800">
             {{ session('error') }}
-        </div>
+        </x-card>
     @endif
     @if (session('message'))
-        <div class="bg-green/10 p-4 text-center font-bold text-green-dark">
+        <x-card id="message-container"
+            x-data="{ show: true }"
+            x-show="show"
+            x-init="$nextTick(() => $el.scrollIntoView({ behavior: 'smooth', block: 'center' }))"
+            class="text-green-dark flex min-h-[400px] items-center justify-center text-center font-bold">
             {{ session('message') }}
-        </div>
+        </x-card>
     @endif
 </div>
+
+<script>
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.on('flash-message', () => {
+            const messageContainer = document.getElementById('message-container');
+            if (messageContainer) {
+                messageContainer.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+        });
+    });
+</script>

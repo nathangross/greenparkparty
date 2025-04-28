@@ -1,15 +1,15 @@
 <x-layouts.app :party="$party">
 
     <section class="w-full px-4 py-12 lg:py-24">
+
         <div class="mx-auto w-full max-w-[400px] py-16">
             <x-logo.reverse />
         </div>
         <div class="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 text-center">
             <p class="text-balance text-4xl">
                 It's a new year! Let's have another neighborhood party in our local park!
-                {{-- Let’s connect and have a neighborhood party in our local park! --}}
             </p>
-            {{-- <p class="mt-4">Please RSVP by June 15th, 2024.</p> --}}
+            <p class="mt-4">Please RSVP by {{ $party->getRsvpDeadline()->format('F j, Y') }}.</p>
             <div class="group mt-12 flex flex-col items-center justify-center">
                 <a href="#rsvp"
                     class="border-green-dark/10 flex size-12 animate-bounce items-center justify-center rounded-full border bg-white shadow-sm">
@@ -43,9 +43,8 @@
                 </div>
                 <div class="flex flex-col items-center gap-2 py-8 italic">
                     <p>
-                        Details are still coming together for this year's party but we plan to have food, drinks, and
-                        games
-                        again.
+                        Details are still coming together for this year's party but we do plan to have food, drinks, and
+                        games again.
                     </p>
                 </div>
                 <div class="flex flex-col gap-4 py-8">
@@ -67,16 +66,15 @@
                 <div class="py-8">
                     <span class="text-xl font-bold">Party Organizers</span>
                     <div class="flex flex-col">
-                        <span class="">Monica Fry</span>
-                        <span class="">Joan Eilers</span>
-                        <span class="">Macey Riese</span>
+                        <span class="">The Frys</span>
+                        <span class="">The Eilerses</span>
+                        <span class="">The Grosses</span>
                     </div>
                 </div>
             </div>
         </x-layouts.inner>
     </section>
     <section id="rsvp" class="w-full bg-white/90 py-12 lg:py-24">
-        <x-headings.hero class="text-center">RSVP</x-headings.hero>
         <x-layouts.inner class="max-w-5xl">
             <livewire:rsvp-form />
         </x-layouts.inner>
