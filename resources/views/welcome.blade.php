@@ -66,9 +66,9 @@
                 <div class="py-8">
                     <span class="text-xl font-bold">Party Organizers</span>
                     <div class="flex flex-col">
-                        <span class="">The Frys</span>
-                        <span class="">The Eilerses</span>
-                        <span class="">The Grosses</span>
+                        <span class="">Bob & Monica Fry</span>
+                        <span class="">Mark & Joann Eilers</span>
+                        <span class="">Nathan & Macey Gross</span>
                     </div>
                 </div>
             </div>
