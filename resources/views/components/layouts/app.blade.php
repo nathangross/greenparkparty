@@ -26,6 +26,17 @@
     <link rel="stylesheet" href="https://use.typekit.net/vwo4amw.css"> --}}
     <!-- Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    @if (app()->environment('production'))
+        <script defer data-domain="greenparkparty.com"
+            src="https://plausible.io/js/script.file-downloads.hash.outbound-links.js"></script>
+        <script>
+            window.plausible = window.plausible || function() {
+                (window.plausible.q = window.plausible.q || []).push(arguments)
+            }
+        </script>
+    @endif
+
 </head>
 
 <body id="top"
