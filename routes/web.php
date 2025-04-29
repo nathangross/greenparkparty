@@ -4,13 +4,7 @@ use App\Models\Party;
 use App\Mail\TestEmail;
 use App\Mail\RSVPUpdateMail;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Route;
-
-View::composer('*', function ($view) {
-    $party = Party::where('is_active', true)->first();
-    $view->with('party', $party);
-});
 
 Route::get('/', function () {
     return view('welcome');
