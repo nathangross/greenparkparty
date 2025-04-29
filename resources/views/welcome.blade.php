@@ -67,7 +67,7 @@
                     <span class="text-xl font-bold">Party Organizers</span>
                     <div class="flex flex-col">
                         <span class="">Bob & Monica Fry</span>
-                        <span class="">Mark & Joann Eilers</span>
+                        <span class="">Mark & Joan Eilers</span>
                         <span class="">Nathan & Macey Gross</span>
                     </div>
                 </div>
