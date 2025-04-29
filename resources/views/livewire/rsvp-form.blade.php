@@ -374,7 +374,24 @@ $generateUniqueIdentifier = function () {
                     </div>
                 </x-forms.fieldset>
 
-                <button class="rounded-md bg-black px-4 py-2 text-white" type="submit">Submit</button>
+                <button
+                    class="flex items-center justify-center rounded-md bg-black px-4 py-2 text-white hover:cursor-pointer hover:bg-black/80 disabled:opacity-50"
+                    type="submit">
+
+                    <span wire:loading.remove wire:target="save" class="ml-2">
+                        Submit
+                    </span>
+
+                    <span wire:loading wire:target="save" class="ml-2">
+                        <svg class="h-5 w-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+                            </path>
+                        </svg>
+                    </span>
+                </button>
             </div>
         </form>
     @endif
