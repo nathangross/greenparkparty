@@ -55,10 +55,10 @@
             <a href="{{ route('welcome') }}#top" x-transition :class="isScrolled ? 'flex' : 'hidden'" class="">
                 <x-logo class="size-20 lg:size-24" />
             </a>
-            <a href="{{ route('welcome') }}#details">
+            <a href="{{ route('welcome') }}#details" class="group">
                 <x-navigation.item>Details</x-navigation.item>
             </a>
-            <a href="{{ route('welcome') }}#rsvp">
+            <a href="{{ route('welcome') }}#rsvp" class="group">
                 <x-navigation.item>RSVP</x-navigation.item>
             </a>
             <button
@@ -74,7 +74,7 @@
                         alert('Sharing is not supported.');
                     }
                 "
-                class="rounded-md bg-green-600 px-4 py-2 text-white">
+                class="group">
                 <x-navigation.item>
                     Share
                 </x-navigation.item>
@@ -83,12 +83,30 @@
     </nav>
     <nav class="py-8">
         <div class="flex items-center justify-center gap-4">
-            <a href="{{ route('welcome') }}#details">
+            <a href="{{ route('welcome') }}#details" class="group">
                 <x-navigation.item dark>Details</x-navigation.item>
             </a>
-            <a href="{{ route('welcome') }}#rsvp">
+            <a href="{{ route('welcome') }}#rsvp" class="group">
                 <x-navigation.item dark>RSVP</x-navigation.item>
             </a>
+            <button
+                x-data
+                @click="
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'Party RSVP',
+                            text: 'Come join us at the party!',
+                            url: window.location.href,
+                        });
+                    } else {
+                        alert('Sharing is not supported.');
+                    }
+                "
+                class="group">
+                <x-navigation.item dark>
+                    Share
+                </x-navigation.item>
+            </button>
         </div>
     </nav>
     <div class="mt-16 flex min-h-screen w-full flex-col items-center justify-center">
