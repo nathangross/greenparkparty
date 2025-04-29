@@ -376,7 +376,9 @@ $generateUniqueIdentifier = function () {
 
                 <button
                     class="flex items-center justify-center rounded-md bg-black px-4 py-2 text-white hover:cursor-pointer hover:bg-black/80 disabled:opacity-50"
-                    type="submit">
+                    type="submit"
+                    wire:loading.attr="disabled"
+                    wire:target="save">
 
                     <span wire:loading.remove wire:target="save" class="ml-2">
                         Submit
