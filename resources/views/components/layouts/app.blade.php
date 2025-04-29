@@ -18,6 +18,12 @@
     <meta property="og:description" content="A neighborhood party in our local park!">
     <meta property="og:image" content="{{ Vite::asset('resources/images/OG_image.png') }}">
     <meta property="og:url" content="https://greenparkparty.com">
+    <meta property="og:type" content="website">
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="You're invited to the Green Park Party!" />
+    <meta name="twitter:description" content="A neighborhood party in our local park!" />
+    <meta name="twitter:image" content="{{ Vite::asset('resources/images/OG_image.png') }}" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -55,6 +61,24 @@
             <a href="{{ route('welcome') }}#rsvp">
                 <x-navigation.item>RSVP</x-navigation.item>
             </a>
+            <button
+                x-data
+                @click="
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'Party RSVP',
+                            text: 'Come join us at the party!',
+                            url: window.location.href,
+                        });
+                    } else {
+                        alert('Sharing is not supported.');
+                    }
+                "
+                class="rounded-md bg-green-600 px-4 py-2 text-white">
+                <x-navigation.item>
+                    Share
+                </x-navigation.item>
+            </button>
         </div>
     </nav>
     <nav class="py-8">
