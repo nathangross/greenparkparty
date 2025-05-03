@@ -25,8 +25,8 @@
         <x-layouts.inner>
             <x-headings.hero class="text-center">Party Details</x-headings.hero>
 
-            <div class="divide-green-dark/30 mx-auto flex max-w-lg flex-col divide-y text-center">
-                <div class="flex flex-col gap-4 py-8">
+            <div class="divide-green-dark/30 flex flex-col divide-y text-center">
+                <div class="mx-auto flex max-w-lg flex-col gap-4 py-8">
                     <div class="flex flex-col">
                         @if ($party)
                             <span class="text-4xl font-bold">{{ $party->primary_date_start->format('F j, Y') }}</span>
@@ -41,13 +41,19 @@
                         <address>6661 Green Park Drive, Dayton OH 45459</address>
                     </div>
                 </div>
-                <div class="flex flex-col items-center gap-2 py-8 italic">
-                    <p>
-                        Details are still coming together for this year's party but we do plan to have food, drinks, and
-                        games again.
-                    </p>
+                <div class="mx-auto max-w-4xl">
+                    <div class="pt-8">
+                        <img src="{{ Vite::asset('resources/images/claybourne-grille.jpg') }}" alt="Claybourne Grille"
+                            class="h-auto w-full">
+                    </div>
+                    <div class="flex-col items-center gap-2 py-8 italic">
+                        <h2 class="text-2xl font-bold">The Claybourne Grille Food Truck is Back!</h2>
+                        <p>We’re thrilled to welcome back Claybourne Grille as our food vendor for this year’s event!
+                            They
+                            were a huge hit last year, and they’ll be bringing a great menu again. Come hungry!</p>
+                    </div>
                 </div>
-                <div class="flex flex-col gap-4 py-8">
+                <div class="mx-auto flex max-w-lg flex-col gap-4 py-8">
 
                     <div class="text-balance">
                         Feel free to bring your own snacks, beverages, chairs & lawn games.
@@ -63,7 +69,7 @@
                         <p class="">We hope to see you there!</p>
                     </div>
                 </div>
-                <div class="py-8">
+                <div class="mx-auto max-w-lg py-8">
                     <span class="text-xl font-bold">Party Organizers</span>
                     <div class="flex flex-col">
                         <span class="">Bob & Monica Fry</span>
