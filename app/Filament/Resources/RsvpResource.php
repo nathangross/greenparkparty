@@ -57,7 +57,9 @@ class RsvpResource extends Resource
                 Forms\Components\Toggle::make('volunteer')
                     ->required(),
                 Forms\Components\Textarea::make('message_text')
-
+                    ->label('Message')
+                    ->columnSpanFull()
+                    ->rows(4)
             ]);
     }
 

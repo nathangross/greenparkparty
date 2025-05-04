@@ -102,21 +102,12 @@ $save = function () {
 
         // Send RSVP confirmation email if email is provided
         if ($this->email) {
-            Log::info('Attempting to send RSVP confirmation email', [
-                'email' => $this->email,
-                'user_id' => $user->id,
-                'rsvp_id' => $rsvp->id,
-            ]);
             try {
                 dispatch(function () use ($user, $rsvp) {
                     $user->notify(new RsvpConfirmation($rsvp));
                 })->afterResponse();
-                Log::info('RSVP confirmation email queued successfully');
             } catch (\Exception $e) {
-                Log::error('Failed to send RSVP confirmation email', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
+                // Handle email sending error
             }
         }
 
@@ -128,19 +119,12 @@ $save = function () {
                 $mailchimp = Newsletter::getApi();
                 $listId = config('newsletter.lists.subscribers.id');
 
-                Log::info('Mailchimp configuration', [
-                    'api_key' => substr(config('newsletter.driver_arguments.api_key'), 0, 5) . '...',
-                    'list_id' => $listId,
-                    'endpoint' => config('newsletter.driver_arguments.endpoint'),
-                ]);
-
                 // Try to get the subscriber first
                 $subscriberHash = md5(strtolower($this->email));
                 try {
                     $existingSubscriber = $mailchimp->get("lists/{$listId}/members/{$subscriberHash}");
-                    Log::info('Found existing subscriber', ['subscriber' => $existingSubscriber]);
                 } catch (\Exception $e) {
-                    Log::info('No existing subscriber found', ['error' => $e->getMessage()]);
+                    // No existing subscriber found
                 }
 
                 // Subscribe or update the contact
@@ -150,17 +134,10 @@ $save = function () {
                     'PHONE' => $this->phone,
                 ]);
 
-                Log::info('Mailchimp subscribe result', ['result' => $result]);
-
                 if (!$result) {
                     // Get the last error from Mailchimp
                     $lastError = $mailchimp->getLastError();
                     $lastResponse = $mailchimp->getLastResponse();
-                    Log::error('Mailchimp error details', [
-                        'error' => $lastError,
-                        'response' => $lastResponse,
-                        'request' => $mailchimp->getLastRequest(),
-                    ]);
 
                     // Check if this is a permanently deleted contact
                     if (str_contains($lastError, 'permanently deleted and cannot be re-imported')) {
@@ -187,28 +164,11 @@ $save = function () {
                     ],
                 ];
 
-                Log::info('Attempting to add Mailchimp tags', [
-                    'email' => $this->email,
-                    'tags' => $tags,
-                ]);
-
                 $tagResult = $mailchimp->post("lists/{$listId}/members/{$subscriberHash}/tags", [
                     'tags' => $tags,
                 ]);
-
-                Log::info('Mailchimp tag result', ['result' => $tagResult]);
             } catch (\Exception $e) {
-                Log::error('Failed to update Mailchimp contact: ' . $e->getMessage(), [
-                    'email' => $this->email,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-
-                // Check if this is a permanently deleted contact
-                if (str_contains($e->getMessage(), 'permanently deleted and cannot be re-imported')) {
-                    $this->dispatch('flash-error', 'Your email was previously unsubscribed. Please contact us to re-subscribe.');
-                    return;
-                }
+                // Handle Mailchimp update error
             }
         }
     });
