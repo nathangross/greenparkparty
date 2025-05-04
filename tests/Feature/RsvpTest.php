@@ -39,7 +39,7 @@ test('a user can submit an RSVP form', function () {
         ->set('attending_count', 2)
         ->set('phone', '123-456-7890')
         ->set('volunteer', true)
-        ->set('message', 'I am a guest of honor.')
+        ->set('message_text', 'I am a guest of honor.')
         ->set('receive_email_updates', true)
         ->set('receive_sms_updates', false)
         ->call('save')
@@ -56,7 +56,7 @@ test('a user can submit an RSVP form', function () {
         ->first();
 
     expect($rsvp)->not->toBeNull();
-    expect($rsvp->message)->toBe('New message: I am a guest of honor. ');
+    expect($rsvp->message_text)->toBe('New message: I am a guest of honor. ');
 });
 
 test('validation errors are shown for invalid input', function () {
@@ -89,7 +89,7 @@ test('optional fields are correctly handled', function () {
         ->set('phone', null) // Optional field when receive_sms_updates is false
         ->set('street', null) // Optional field
         ->set('volunteer', false)
-        ->set('message', null) // Optional field
+        ->set('message_text', null) // Optional field
         ->set('receive_email_updates', false) // Make sure email is optional
         ->set('receive_sms_updates', false) // Make sure phone is optional
         ->call('save')
@@ -106,7 +106,7 @@ test('optional fields are correctly handled', function () {
         'user_id' => User::where('first_name', 'Jane')->first()->id,
         'attending_count' => 1,
         'volunteer' => 0,
-        'message' => null,
+        'message_text' => null,
         'receive_email_updates' => 0,
         'receive_sms_updates' => 0,
     ]);
@@ -365,7 +365,7 @@ test('rsvp is updated when user RSVPs for the same party again', function () {
         ->set('phone', '123-456-7890')
         ->set('showAttending', true)
         ->set('attending_count', 2)
-        ->set('message', 'First RSVP')
+        ->set('message_text', 'First RSVP')
         ->call('save');
 
     // Second RSVP with updated information
@@ -376,7 +376,7 @@ test('rsvp is updated when user RSVPs for the same party again', function () {
         ->set('phone', '098-765-4321')  // Changed phone
         ->set('showAttending', true)
         ->set('attending_count', 1)  // Changed count
-        ->set('message', 'Updated RSVP')  // New message
+        ->set('message_text', 'Updated RSVP')  // New message
         ->call('save');
 
     // Should only have one user
@@ -390,7 +390,7 @@ test('rsvp is updated when user RSVPs for the same party again', function () {
     // Should have one RSVP with updated information
     $rsvp = Rsvp::where('user_id', $user->id)->first();
     expect($rsvp->attending_count)->toBe(1);
-    expect($rsvp->message)->toBe("New message: First RSVP \n\nMessage update: Updated RSVP ");
+    expect($rsvp->message_text)->toBe("New message: First RSVP \n\nMessage update: Updated RSVP ");
 });
 
 test('rsvp is saved even when mailchimp is not configured', function () {
@@ -437,7 +437,7 @@ test('rsvp messages are appended when updating', function () {
         ->set('email', 'john@example.com')
         ->set('showAttending', true)
         ->set('attending_count', 2)
-        ->set('message', 'I am a guest of honor.')
+        ->set('message_text', 'I am a guest of honor.')
         ->call('save')
         ->assertHasNoErrors();
 
@@ -448,7 +448,7 @@ test('rsvp messages are appended when updating', function () {
         ->set('email', 'john@example.com')
         ->set('showAttending', true)
         ->set('attending_count', 3)
-        ->set('message', 'I am bringing cookies!')
+        ->set('message_text', 'I am bringing cookies!')
         ->call('save')
         ->assertHasNoErrors();
 
@@ -469,7 +469,7 @@ test('rsvp messages are appended when updating', function () {
         ->set('email', 'john@example.com')
         ->set('showAttending', true)
         ->set('attending_count', 5)
-        ->set('message', 'I am bringing a friend!')
+        ->set('message_text', 'I am bringing a friend!')
         ->call('save')
         ->assertHasNoErrors();
 
@@ -478,5 +478,5 @@ test('rsvp messages are appended when updating', function () {
     $rsvp = Rsvp::where('user_id', $user->id)->first();
 
     // Verify the message format
-    expect($rsvp->message)->toBe("New message: I am a guest of honor. \n\nMessage update: I am bringing cookies! \n\nMessage update: I am bringing a friend! ");
+    expect($rsvp->message_text)->toBe("New message: I am a guest of honor. \n\nMessage update: I am bringing cookies! \n\nMessage update: I am bringing a friend! ");
 });

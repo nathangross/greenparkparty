@@ -23,7 +23,7 @@ state([
     'showAttending' => true,
     'attending_count' => 1,
     'volunteer' => false,
-    'message' => '',
+    'message_text' => '',
     'showForm' => true,
     'receive_email_updates' => false,
     'receive_sms_updates' => false,
@@ -41,7 +41,7 @@ rules([
     'street' => 'nullable',
     'attending_count' => 'required_if:showAttending,true|numeric|min:0',
     'volunteer' => 'nullable|boolean',
-    'message' => 'nullable|max:255',
+    'message_text' => 'nullable',
     'receive_email_updates' => 'nullable|boolean',
     'receive_sms_updates' => 'nullable|boolean',
 ]);
@@ -76,13 +76,13 @@ $save = function () {
         $existingRsvp = Rsvp::where('user_id', $user->id)->where('party_id', $this->activeParty->id)->first();
 
         // Combine messages if both exist
-        $message = $this->message;
-        if ($message && $existingRsvp?->message) {
-            $message = $existingRsvp->message . "\n\nMessage update: " . $message . ' ';
+        $message = $this->message_text;
+        if ($message && $existingRsvp?->message_text) {
+            $message = $existingRsvp->message_text . "\n\nMessage update: " . $message . ' ';
         } elseif ($message) {
             $message = 'New message: ' . $message . ' ';
         } elseif (!$message) {
-            $message = $existingRsvp?->message;
+            $message = $existingRsvp?->message_text;
         }
 
         // Update or create the RSVP
@@ -94,7 +94,7 @@ $save = function () {
             [
                 'attending_count' => $this->attending_count,
                 'volunteer' => $this->volunteer,
-                'message' => $message,
+                'message_text' => $message,
                 'receive_email_updates' => $this->receive_email_updates,
                 'receive_sms_updates' => $this->receive_sms_updates,
             ],
@@ -364,10 +364,10 @@ $generateUniqueIdentifier = function () {
                         </div>
 
                         <div class="">
-                            <x-input.label for="message">Leave us a note </x-input.label>
-                            <textarea name="message" id="message" class="border-green-dark mt-1 h-32 w-full rounded-lg border"
-                                wire:model="message"></textarea>
-                            @error('message')
+                            <x-input.label for="message_text">Leave us a note </x-input.label>
+                            <textarea name="message_text" id="message_text" class="border-green-dark mt-1 h-32 w-full rounded-lg border"
+                                wire:model="message_text"></textarea>
+                            @error('message_text')
                                 <div class="mt-1 text-sm text-red-600">{{ $message }}</div>
                             @enderror
                         </div>

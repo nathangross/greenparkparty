@@ -56,8 +56,8 @@ class RsvpResource extends Resource
                     ->default(0),
                 Forms\Components\Toggle::make('volunteer')
                     ->required(),
-                Forms\Components\TextInput::make('message')
-                    ->maxLength(255),
+                Forms\Components\Textarea::make('message_text')
+
             ]);
     }
 
@@ -87,13 +87,13 @@ class RsvpResource extends Resource
                     ->sortable(),
                 Tables\Columns\IconColumn::make('volunteer')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('message')
+                Tables\Columns\TextColumn::make('message_text')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('has_message')
                     ->label('Message')
                     ->boolean()
-                    ->getStateUsing(fn ($record) => !empty($record->message))
+                    ->getStateUsing(fn ($record) => !empty($record->message_text))
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\IconColumn::make('receive_email_updates')
