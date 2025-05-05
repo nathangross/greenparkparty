@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
-use App\Models\Parties, id;
+use App\Models\Party;
 use App\Models\Rsvp;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 class RsvpFactory extends Factory
 {
@@ -22,11 +22,13 @@ class RsvpFactory extends Factory
     public function definition(): array
     {
         return [
-            'party_id' => Parties, id::factory(),
-            'email' => $this->faker->safeEmail(),
-            'comments' => $this->faker->text(),
-            'has_many' => $this->faker->word(),
-            'soft_deletes' => $this->faker->word(),
+            'party_id' => Party::factory(),
+            'user_id' => User::factory(),
+            'attending_count' => $this->faker->numberBetween(0, 5),
+            'volunteer' => $this->faker->boolean(),
+            'message_text' => $this->faker->optional()->sentence(),
+            'receive_email_updates' => $this->faker->boolean(),
+            'receive_sms_updates' => $this->faker->boolean(),
         ];
     }
 }
