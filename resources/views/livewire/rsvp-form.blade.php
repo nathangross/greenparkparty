@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use App\Notifications\RsvpConfirmation;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\App;
+use App\Notifications\AdminRsvpNotification;
 
 // Inject the PartyService
 $partyService = app(PartyService::class);
@@ -108,6 +109,25 @@ $save = function () {
             } catch (\Exception $e) {
                 // Handle email sending error
             }
+        }
+
+        // Send admin notification
+        try {
+            $dispatchCallback = function () use ($rsvp) {
+                // Get the admin user (you can modify this to get your specific user ID)
+                $admin = User::where('email', config('app.admin_email'))->first();
+                if ($admin) {
+                    $admin->notify(new AdminRsvpNotification($rsvp));
+                }
+            };
+
+            if (App::environment('testing')) {
+                $dispatchCallback();
+            } else {
+                dispatch($dispatchCallback)->afterResponse();
+            }
+        } catch (\Exception $e) {
+            // Handle admin notification error
         }
 
         // Update Mailchimp contact if email is provided and they've opted in for updates

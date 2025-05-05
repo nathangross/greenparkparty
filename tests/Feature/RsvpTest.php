@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Spatie\Newsletter\Facades\Newsletter;
 use Illuminate\Support\Facades\Config;
 use Carbon\Carbon;
+use App\Notifications\AdminRsvpNotification;
 
 uses(RefreshDatabase::class);
 uses(WithViewComposer::class);
@@ -485,4 +486,90 @@ test('rsvp messages are appended when updating', function () {
 
     // Verify the message format
     expect($rsvp->message_text)->toBe("New message: I am a guest of honor. \n\nMessage update: I am bringing cookies! \n\nMessage update: I am bringing a friend! ");
+});
+
+test('admin receives notification when RSVP is submitted', function () {
+    // Create a party
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    // Create an admin user with a specific email
+    $admin = User::factory()->create([
+        'first_name' => 'Admin',
+        'email' => 'admin@example.com',
+    ]);
+    config(['app.admin_email' => $admin->email]);
+    $this->assertNotNull(User::where('email', config('app.admin_email'))->first());
+    config(['queue.default' => 'sync']); // Force sync queue
+
+    // Submit an RSVP
+    Volt::test('rsvp-form')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'john@example.com')
+        ->set('showAttending', true)
+        ->set('attending_count', 2)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Assert that the admin was notified
+    $this->assertDatabaseHas('notifications', [
+        'notifiable_id' => $admin->id,
+        'notifiable_type' => User::class,
+        'type' => AdminRsvpNotification::class,
+    ]);
+});
+
+test('admin notification is not sent when admin email is not configured', function () {
+    // Create a party
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    // Ensure no admin email is configured
+    config(['app.admin_email' => null]);
+
+    // Submit an RSVP
+    Volt::test('rsvp-form')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('showAttending', true)
+        ->set('attending_count', 1)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    // Assert that no admin notifications were sent
+    $this->assertDatabaseMissing('notifications', [
+        'type' => AdminRsvpNotification::class,
+    ]);
+});
+
+test('admin notification is sent for both new and updated RSVPs', function () {
+    // Create a party
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    // Create an admin user with a specific email
+    $admin = User::factory()->create(['email' => 'admin@example.com']);
+    config(['app.admin_email' => 'admin@example.com']);
+
+    // Submit initial RSVP
+    Volt::test('rsvp-form')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'john@example.com')
+        ->set('showAttending', true)
+        ->set('attending_count', 1)
+        ->call('save');
+
+    // Update the RSVP
+    Volt::test('rsvp-form')
+        ->set('first_name', 'John')
+        ->set('last_name', 'Doe')
+        ->set('email', 'john@example.com')
+        ->set('showAttending', true)
+        ->set('attending_count', 2)
+        ->call('save');
+
+    // Assert that two notifications were sent
+    $this->assertCount(2, $admin->notifications()->where('type', AdminRsvpNotification::class)->get());
 });

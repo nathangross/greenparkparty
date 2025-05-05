@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Rsvp;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -15,7 +16,7 @@ class RsvpConfirmation extends Notification implements ShouldQueue
 
     protected $rsvp;
 
-    public function __construct($rsvp)
+    public function __construct(Rsvp $rsvp)
     {
         $this->rsvp = $rsvp;
         Log::info('RsvpConfirmation notification constructed', [
