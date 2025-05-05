@@ -19,6 +19,7 @@ uses(WithNewsletterMock::class);
 
 beforeEach(function () {
     $this->setUpNewsletterMock();
+    \Illuminate\Support\Facades\Notification::fake();
 });
 
 test('true is true', function () {
@@ -57,6 +58,11 @@ test('a user can submit an RSVP form', function () {
 
     expect($rsvp)->not->toBeNull();
     expect($rsvp->message_text)->toBe('New message: I am a guest of honor. ');
+
+    \Illuminate\Support\Facades\Notification::assertSentTo(
+        User::where('email', 'john@example.com')->first(),
+        \App\Notifications\RsvpConfirmation::class
+    );
 });
 
 test('validation errors are shown for invalid input', function () {

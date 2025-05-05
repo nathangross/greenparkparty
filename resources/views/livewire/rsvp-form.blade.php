@@ -9,6 +9,7 @@ use Spatie\Newsletter\Facades\Newsletter;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Notifications\RsvpConfirmation;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\App;
 
 // Inject the PartyService
@@ -103,9 +104,7 @@ $save = function () {
         // Send RSVP confirmation email if email is provided
         if ($this->email) {
             try {
-                dispatch(function () use ($user, $rsvp) {
-                    $user->notify(new RsvpConfirmation($rsvp));
-                })->afterResponse();
+                Notification::send($user, new RsvpConfirmation($rsvp));
             } catch (\Exception $e) {
                 // Handle email sending error
             }
