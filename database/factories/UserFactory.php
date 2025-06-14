@@ -22,10 +22,11 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'rsvp_id' => Rsvp::factory(),
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
-            'soft_deletes' => $this->faker->word(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'phone' => $this->faker->optional()->phoneNumber(),
+            'street' => $this->faker->optional()->streetAddress(),
         ];
     }
 }

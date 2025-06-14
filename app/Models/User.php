@@ -16,7 +16,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return str_ends_with($this->email, '@bldg13.com');
+        return $this->email === 'nathan@bldg13.com';
     }
 
     protected $guarded = [];
@@ -28,12 +28,11 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $casts = [
         'id' => 'integer',
-        'rsvp_id' => 'integer',
     ];
 
-    public function rsvp(): HasMany
+    public function rsvps(): HasMany
     {
-        return $this->hasMany(Rsvp::class, 'rsvp_id');
+        return $this->hasMany(Rsvp::class);
     }
 
     public function getFullNameAttribute()

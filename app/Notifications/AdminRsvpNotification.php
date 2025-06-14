@@ -15,7 +15,7 @@ class AdminRsvpNotification extends Notification implements ShouldQueue
 
     public function __construct(Rsvp $rsvp)
     {
-        $this->rsvp = $rsvp;
+        $this->rsvp = $rsvp->load(['user', 'party']);
         Log::info('AdminRsvpNotification constructed', [
             'rsvp_id' => $rsvp->id,
             'user_id' => $rsvp->user_id,
@@ -27,20 +27,21 @@ class AdminRsvpNotification extends Notification implements ShouldQueue
     public function via($notifiable): array
     {
         Log::info('AdminRsvpNotification via method called', [
-            'notifiable' => $notifiable->toArray()
+            'notifiable_id' => $notifiable->id,
+            'notifiable_email' => $notifiable->email
         ]);
         return ['mail'];
     }
 
     public function toMail($notifiable): MailMessage
     {
-
         Log::info('AdminRsvpNotification toMail method called', [
-            'notifiable' => $notifiable->toArray()
+            'notifiable_id' => $notifiable->id,
+            'notifiable_email' => $notifiable->email
         ]);
 
-        $party = $this->rsvp->party;
         $user = $this->rsvp->user;
+        $party = $this->rsvp->party;
 
         $message = (new MailMessage)
             ->subject('New RSVP Submission - Green Park Party')
@@ -54,7 +55,7 @@ class AdminRsvpNotification extends Notification implements ShouldQueue
             ->line('**RSVP Details:**')
             ->line("* **Attending:** " . ($this->rsvp->attending_count > 0 ? 'Yes' : 'No'))
             ->line("* **Number of Guests:** {$this->rsvp->attending_count}")
-            ->line("* **Volunteering:** " . ($this->rsvp->volunteer ? 'Yes' : 'No'))
+            ->line("* **Volunteer:** " . ($this->rsvp->volunteer ? 'Yes' : 'No'))
             ->line("* **Email Updates:** " . ($this->rsvp->receive_email_updates ? 'Yes' : 'No'))
             ->line("* **SMS Updates:** " . ($this->rsvp->receive_sms_updates ? 'Yes' : 'No'));
 
@@ -70,7 +71,8 @@ class AdminRsvpNotification extends Notification implements ShouldQueue
     public function toArray($notifiable): array
     {
         Log::info('AdminRsvpNotification toArray method called', [
-            'notifiable' => $notifiable->toArray()
+            'notifiable_id' => $notifiable->id,
+            'notifiable_email' => $notifiable->email
         ]);
 
         return [
