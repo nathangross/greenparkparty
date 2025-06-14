@@ -30,12 +30,13 @@ class Party extends Model
 
     /**
      * Get the RSVP deadline for this party.
-     * The deadline is set to 2 weeks before the party start date.
+     * The deadline is set to 1 week before the party start date.
+     * TODO: Make this configurable in the admin panel.
      *
      * @return \Carbon\Carbon
      */
     public function getRsvpDeadline()
     {
-        return $this->primary_date_start->subWeeks(2);
+        return $this->primary_date_start->subWeeks(1);
     }
 }
