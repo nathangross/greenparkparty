@@ -497,9 +497,10 @@ test('admin receives notification when RSVP is submitted', function () {
     $party = Party::factory()->create(['is_active' => true]);
     $this->setUpViewComposer($party);
 
-    // Create an admin user
-    $admin = User::factory()->create(['email' => 'admin@example.com']);
-    config(['app.admin_email' => 'admin@example.com']);
+    // Create admin users
+    $admin1 = User::factory()->create(['email' => 'admin1@example.com']);
+    $admin2 = User::factory()->create(['email' => 'admin2@example.com']);
+    config(['app.admin_emails' => ['admin1@example.com', 'admin2@example.com']]);
 
     // Create a user and RSVP directly instead of through the form
     $user = User::factory()->create([
@@ -518,10 +519,12 @@ test('admin receives notification when RSVP is submitted', function () {
     ]);
 
     // Send notification directly
-    $admin->notify(new AdminRsvpNotification($rsvp));
+    $admin1->notify(new AdminRsvpNotification($rsvp));
+    $admin2->notify(new AdminRsvpNotification($rsvp));
 
-    // Assert the notification was sent
-    Notification::assertSentTo($admin, AdminRsvpNotification::class);
+    // Assert the notifications were sent to both admins
+    Notification::assertSentTo($admin1, AdminRsvpNotification::class);
+    Notification::assertSentTo($admin2, AdminRsvpNotification::class);
 });
 
 // Comment out the other failing tests for now

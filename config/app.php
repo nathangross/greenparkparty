@@ -41,7 +41,7 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
-    'admin_email' => env('ADMIN_EMAIL'),
+    'admin_emails' => array_filter(explode(',', env('ADMIN_EMAILS', ''))),
 
     /*
     |--------------------------------------------------------------------------

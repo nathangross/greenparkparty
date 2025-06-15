@@ -33,9 +33,17 @@ class SendRsvpNotifications implements ShouldQueue
     public function handle()
     {
         if ($this->shouldNotifyAdmin) {
-            $admin = User::where('email', config('app.admin_email'))->first();
-            if ($admin) {
-                $admin->notify(new AdminRsvpNotification($this->rsvp));
+            $adminEmails = config('app.admin_emails', []);
+            foreach ($adminEmails as $email) {
+                $admin = User::where('email', $email)->first();
+                if ($admin) {
+                    $admin->notify(new AdminRsvpNotification($this->rsvp));
+                } else {
+                    Log::warning('Admin notification skipped - no user found for email', [
+                        'email' => $email,
+                        'rsvp_id' => $this->rsvp->id
+                    ]);
+                }
             }
         }
 
