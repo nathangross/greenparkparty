@@ -41,6 +41,8 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
+    'admin_emails' => array_filter(explode(',', env('ADMIN_EMAILS', ''))),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL

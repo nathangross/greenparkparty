@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Rsvp;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -15,19 +16,21 @@ class RsvpConfirmation extends Notification implements ShouldQueue
 
     protected $rsvp;
 
-    public function __construct($rsvp)
+    public function __construct(Rsvp $rsvp)
     {
-        $this->rsvp = $rsvp;
+        $this->rsvp = $rsvp->load(['user', 'party']);
         Log::info('RsvpConfirmation notification constructed', [
             'rsvp_id' => $rsvp->id,
-            'user' => $rsvp->user->toArray()
+            'user_id' => $rsvp->user_id,
+            'party_id' => $rsvp->party_id
         ]);
     }
 
     public function via($notifiable)
     {
         Log::info('RsvpConfirmation via method called', [
-            'notifiable' => $notifiable->toArray()
+            'notifiable_id' => $notifiable->id,
+            'notifiable_email' => $notifiable->email
         ]);
         return ['mail'];
     }
@@ -35,8 +38,8 @@ class RsvpConfirmation extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         Log::info('RsvpConfirmation toMail method called', [
-            'notifiable' => $notifiable->toArray(),
-            'rsvp' => $this->rsvp->toArray()
+            'notifiable_id' => $notifiable->id,
+            'notifiable_email' => $notifiable->email
         ]);
 
         $message = $this->rsvp->attending_count > 0

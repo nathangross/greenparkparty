@@ -9,7 +9,11 @@ use Spatie\Newsletter\Facades\Newsletter;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Notifications\RsvpConfirmation;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\App;
+use App\Notifications\AdminRsvpNotification;
+use Illuminate\Support\Facades\Queue;
+use App\Jobs\SendRsvpNotifications;
 
 // Inject the PartyService
 $partyService = app(PartyService::class);
@@ -47,6 +51,8 @@ rules([
 ]);
 
 $save = function () {
+    $shouldNotifyAdmin = false;
+    $adminNotifyRsvp = null;
     if (!$this->isAcceptingRsvps) {
         $this->dispatch('flash-error', 'RSVPs are not currently open.');
         return;
@@ -54,29 +60,42 @@ $save = function () {
 
     $this->validate();
 
-    DB::transaction(function () {
+    // Local variable copies of state
+    $firstName = $this->first_name;
+    $lastName = $this->last_name;
+    $email = $this->email;
+    $phone = $this->phone;
+    $street = $this->street;
+    $attendingCount = $this->attending_count;
+    $volunteer = $this->volunteer;
+    $messageText = $this->message_text;
+    $receiveEmailUpdates = $this->receive_email_updates;
+    $receiveSmsUpdates = $this->receive_sms_updates;
+    $activeParty = $this->activeParty;
+    $partyYear = $this->partyYear;
+    $showAttending = $this->showAttending;
+
+    DB::transaction(function () use (&$shouldNotifyAdmin, &$adminNotifyRsvp, &$shouldNotifyUser, &$userToNotify, $firstName, $lastName, $email, $phone, $street, $attendingCount, $volunteer, $messageText, $receiveEmailUpdates, $receiveSmsUpdates, $activeParty, $partyYear, $showAttending) {
         // Set attending_count to 0 if not attending
-        if (!$this->showAttending) {
-            $this->attending_count = 0;
-        }
+        $finalAttendingCount = $showAttending ? $attendingCount : 0;
 
         // Find or create the user
         $user = User::updateOrCreate(
-            ['email' => $this->email ?: null],
+            ['email' => $email ?: null],
             [
-                'first_name' => $this->first_name,
-                'last_name' => $this->last_name,
-                'phone' => $this->phone,
-                'street' => $this->street,
-                'email' => $this->email ?: null,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'phone' => $phone,
+                'street' => $street,
+                'email' => $email ?: null,
             ],
         );
 
         // Find existing RSVP if any
-        $existingRsvp = Rsvp::where('user_id', $user->id)->where('party_id', $this->activeParty->id)->first();
+        $existingRsvp = Rsvp::where('user_id', $user->id)->where('party_id', $activeParty->id)->first();
 
         // Combine messages if both exist
-        $message = $this->message_text;
+        $message = $messageText;
         if ($message && $existingRsvp?->message_text) {
             $message = $existingRsvp->message_text . "\n\nMessage update: " . $message . ' ';
         } elseif ($message) {
@@ -89,38 +108,33 @@ $save = function () {
         $rsvp = Rsvp::updateOrCreate(
             [
                 'user_id' => $user->id,
-                'party_id' => $this->activeParty->id,
+                'party_id' => $activeParty->id,
             ],
             [
-                'attending_count' => $this->attending_count,
-                'volunteer' => $this->volunteer,
+                'attending_count' => $finalAttendingCount,
+                'volunteer' => $volunteer,
                 'message_text' => $message,
-                'receive_email_updates' => $this->receive_email_updates,
-                'receive_sms_updates' => $this->receive_sms_updates,
+                'receive_email_updates' => $receiveEmailUpdates,
+                'receive_sms_updates' => $receiveSmsUpdates,
             ],
         );
 
-        // Send RSVP confirmation email if email is provided
-        if ($this->email) {
-            try {
-                dispatch(function () use ($user, $rsvp) {
-                    $user->notify(new RsvpConfirmation($rsvp));
-                })->afterResponse();
-            } catch (\Exception $e) {
-                // Handle email sending error
-            }
-        }
+        // Prepare notifications after transaction
+        $adminNotifyRsvp = $rsvp;
+        $shouldNotifyAdmin = true;
+        $shouldNotifyUser = $email ? true : false;
+        $userToNotify = $user;
 
         // Update Mailchimp contact if email is provided and they've opted in for updates
         // Skip Mailchimp integration in local environment
-        if (!App::environment('local') && $this->email && ($this->receive_email_updates || $this->receive_sms_updates)) {
+        if (!App::environment('local') && $email && ($receiveEmailUpdates || $receiveSmsUpdates)) {
             try {
                 // Get the Mailchimp API instance
                 $mailchimp = Newsletter::getApi();
                 $listId = config('newsletter.lists.subscribers.id');
 
                 // Try to get the subscriber first
-                $subscriberHash = md5(strtolower($this->email));
+                $subscriberHash = md5(strtolower($email));
                 try {
                     $existingSubscriber = $mailchimp->get("lists/{$listId}/members/{$subscriberHash}");
                 } catch (\Exception $e) {
@@ -128,10 +142,10 @@ $save = function () {
                 }
 
                 // Subscribe or update the contact
-                $result = Newsletter::subscribeOrUpdate($this->email, [
-                    'FNAME' => $this->first_name,
-                    'LNAME' => $this->last_name,
-                    'PHONE' => $this->phone,
+                $result = Newsletter::subscribeOrUpdate($email, [
+                    'FNAME' => $firstName,
+                    'LNAME' => $lastName,
+                    'PHONE' => $phone,
                 ]);
 
                 if (!$result) {
@@ -151,16 +165,16 @@ $save = function () {
                 // Add tags based on preferences
                 $tags = [
                     [
-                        'name' => $this->partyYear . ' - Attending',
-                        'status' => $this->attending_count > 0 ? 'active' : 'inactive',
+                        'name' => $partyYear . ' - Attending',
+                        'status' => $finalAttendingCount > 0 ? 'active' : 'inactive',
                     ],
                     [
-                        'name' => $this->partyYear . ' - Volunteer',
-                        'status' => $this->volunteer ? 'active' : 'inactive',
+                        'name' => $partyYear . ' - Volunteer',
+                        'status' => $volunteer ? 'active' : 'inactive',
                     ],
                     [
-                        'name' => $this->partyYear . ' - SMS Updates',
-                        'status' => $this->receive_sms_updates ? 'active' : 'inactive',
+                        'name' => $partyYear . ' - SMS Updates',
+                        'status' => $receiveSmsUpdates ? 'active' : 'inactive',
                     ],
                 ];
 
@@ -172,6 +186,8 @@ $save = function () {
             }
         }
     });
+
+    SendRsvpNotifications::dispatch($adminNotifyRsvp, $shouldNotifyAdmin, $shouldNotifyUser, $userToNotify);
 
     if ($this->attending_count > 0) {
         $message = "Thanks {$this->first_name}, we have you down for {$this->attending_count}. We'll see you there!";
