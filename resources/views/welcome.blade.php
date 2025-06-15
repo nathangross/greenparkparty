@@ -49,7 +49,7 @@
                     <div class="flex-col items-center gap-2 py-8 italic">
                         <h2 class="text-2xl font-bold">We have a new food truck this year!</h2>
                         <p>
-                            <stong>Chef Lewis</stong> (More than a Apron) will be there with a
+                            <strong>Chef Lewis</strong> (More than a Apron) will be there with a
                             select menu including <strong>tacos</strong>, <strong>burgers</strong> and
                             <strong>wings</strong>! The reviews are great and we can't wait to
                             get a taste! Come hungry!
