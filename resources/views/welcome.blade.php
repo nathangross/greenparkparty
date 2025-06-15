@@ -43,15 +43,18 @@
                 </div>
                 <div class="mx-auto max-w-4xl">
                     <div class="pt-8">
-                        <img src="{{ Vite::asset('resources/images/claybourne-grille.jpg') }}" alt="Claybourne Grille"
+                        <img src="{{ Vite::asset('resources/images/more-than-a-apron.jpg') }}" alt="More Than a Apron"
                             class="h-auto w-full">
                     </div>
                     <div class="flex-col items-center gap-2 py-8 italic">
-                        <h2 class="text-2xl font-bold">The Claybourne Grille Food Truck is Back!</h2>
-                        <p>We’re thrilled to welcome back Claybourne Grille as our food vendor for this year’s event!
-                            They
-                            were a huge hit last year, and they’ll be bringing a great menu again. Come hungry!</p>
+                        <h2 class="text-2xl font-bold">We have a new food truck this year!</h2>
+                        <p>Chef Lewis (More than a Apron) will be there with a
+                            select menu including tacos, burgers andwings
+                            <strong>wings</strong>! The reviews are great and we can't wait to
+                            get a taste! Come hungry!
+                        </p>
                     </div>
+
                 </div>
                 <div class="mx-auto flex max-w-lg flex-col gap-4 py-8">
 
