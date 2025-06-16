@@ -7,9 +7,19 @@
         </div>
         <div class="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 text-center">
             <p class="text-balance text-4xl">
-                It's a new year! Let's have another neighborhood party in our local park!
+                @if ($party)
+                    It's a new year! Let's have another neighborhood party in our local park!
+                @else
+                    Welcome to Green Park Party!
+                @endif
             </p>
-            <p class="mt-4">Please RSVP by {{ $party->getRsvpDeadline()->format('F j, Y') }}.</p>
+
+            @if ($party && $party->getRsvpDeadline())
+                <p class="mt-4">Please RSVP by {{ $party->getRsvpDeadline()->format('F j, Y') }}.</p>
+            @else
+                <p class="mt-4">RSVP deadline to be announced.</p>
+            @endif
+
             <div class="group mt-12 flex flex-col items-center justify-center">
                 <a href="#rsvp"
                     class="border-green-dark/10 flex size-12 animate-bounce items-center justify-center rounded-full border bg-white shadow-sm">
@@ -28,12 +38,12 @@
             <div class="divide-green-dark/30 flex flex-col divide-y text-center">
                 <div class="mx-auto flex max-w-lg flex-col gap-4 py-8">
                     <div class="flex flex-col">
-                        @if ($party)
+                        @if ($party && $party->primary_date_start && $party->primary_date_end)
                             <span class="text-4xl font-bold">{{ $party->primary_date_start->format('F j, Y') }}</span>
                             <span class="text-2xl">{{ $party->primary_date_start->format('g:i A') }} to
                                 {{ $party->primary_date_end->format('g:i A') }}</span>
                         @else
-                            <span class="text-4xl font-bold">No party found.</span>
+                            <span class="text-4xl font-bold">Date and time to be announced</span>
                         @endif
                     </div>
                     <div class="flex flex-col">
@@ -73,14 +83,14 @@
                         <p class="">We hope to see you there!</p>
                     </div>
                 </div>
-                <div class="mx-auto max-w-lg py-8">
+                {{-- <div class="mx-auto max-w-lg py-8">
                     <span class="text-xl font-bold">Party Organizers</span>
                     <div class="flex flex-col">
                         <span class="">Bob & Monica Fry</span>
                         <span class="">Mark & Joan Eilers</span>
                         <span class="">Nathan & Macey Gross</span>
                     </div>
-                </div>
+                </div> --}}
             </div>
         </x-layouts.inner>
     </section>
