@@ -13,7 +13,18 @@ class PartyService
 
     public function isAcceptingRsvps(): bool
     {
-        return $this->getActiveParty() !== null;
+        $party = $this->getActiveParty();
+
+        if (!$party) {
+            return false;
+        }
+
+        // Close RSVPs the day after the party ends
+        if ($party->primary_date_end && now()->isAfter($party->primary_date_end->endOfDay())) {
+            return false;
+        }
+
+        return true;
     }
 
     public function getCurrentPartyYear(): ?string

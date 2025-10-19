@@ -15,9 +15,6 @@ use App\Notifications\AdminRsvpNotification;
 use Illuminate\Support\Facades\Queue;
 use App\Jobs\SendRsvpNotifications;
 
-// Inject the PartyService
-$partyService = app(PartyService::class);
-
 state([
     'first_name' => '',
     'last_name' => '',
@@ -33,9 +30,9 @@ state([
     'receive_sms_updates' => false,
 ]);
 
-$activeParty = computed(fn() => $partyService->getActiveParty());
-$partyYear = computed(fn() => $partyService->getCurrentPartyYear());
-$isAcceptingRsvps = computed(fn() => $partyService->isAcceptingRsvps());
+$activeParty = computed(fn() => app(PartyService::class)->getActiveParty());
+$partyYear = computed(fn() => app(PartyService::class)->getCurrentPartyYear());
+$isAcceptingRsvps = computed(fn() => app(PartyService::class)->isAcceptingRsvps());
 
 rules([
     'first_name' => 'required|min:3',
@@ -226,8 +223,13 @@ $generateUniqueIdentifier = function () {
                 @endif
 
                 @if (!$this->isAcceptingRsvps)
-                    <div class="text-center text-xl">
-                        RSVPs are not currently open.
+                    <div class="text-center">
+                        <p class="text-xl font-bold mb-4">
+                            Thank you for your interest!
+                        </p>
+                        <p class="text-lg text-gray-700">
+                            RSVPs for this year's party have closed. We hope to see you next year!
+                        </p>
                     </div>
                 @else
                     <x-forms.fieldset legend="Your Information">

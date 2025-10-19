@@ -27,6 +27,10 @@ class PartyResource extends Resource
                 Forms\Components\TextInput::make('title')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Active Party')
+                    ->helperText('Only one party can be active at a time. Activating this party will deactivate all others.')
+                    ->default(false),
                 Forms\Components\DateTimePicker::make('primary_date_start')
                     ->required(),
                 Forms\Components\DateTimePicker::make('primary_date_end')
