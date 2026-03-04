@@ -65,22 +65,11 @@
                         <address>6661 Green Park Drive, Dayton OH 45459</address>
                     </div>
                 </div>
+                @if ($isAcceptingRsvps)
                 <div class="mx-auto max-w-4xl">
-                    <div class="pt-8">
-                        <img src="{{ Vite::asset('resources/images/more-than-a-apron.jpg') }}" alt="More Than a Apron"
-                            class="h-auto w-full">
-                    </div>
-                    <div class="flex-col items-center gap-2 py-8 italic">
-                        <h2 class="text-2xl font-bold">We have a new food truck this year!</h2>
-                        <p>
-                            <strong>Chef Lewis</strong> (More than a Apron) will be there with a
-                            select menu including <strong>tacos</strong>, <strong>burgers</strong> and
-                            <strong>wings</strong>! The reviews are great and we can't wait to
-                            get a taste! Come hungry!
-                        </p>
-                    </div>
-
+                    {{-- Food truck details go here when confirmed for the new party --}}
                 </div>
+                @endif
                 <div class="mx-auto flex max-w-lg flex-col gap-4 py-8">
 
                     <div class="text-balance">
