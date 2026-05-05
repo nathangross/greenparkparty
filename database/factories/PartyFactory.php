@@ -20,12 +20,18 @@ class PartyFactory extends Factory
      */
     public function definition(): array
     {
+        $primaryDateStart = now()->addWeeks(6)->setTime(17, 0);
+        $primaryDateEnd = $primaryDateStart->copy()->addHours(3);
+        $secondaryDateStart = $primaryDateStart->copy()->addDay();
+        $secondaryDateEnd = $secondaryDateStart->copy()->addHours(3);
+        $hasSecondaryDate = $this->faker->boolean(75);
+
         return [
             'title' => $this->faker->sentence(4),
-            'primary_date_start' => $this->faker->dateTime,
-            'primary_date_end' => $this->faker->dateTime,
-            'secondary_date_start' => $this->faker->optional()->dateTime,
-            'secondary_date_end' => $this->faker->optional()->dateTime,
+            'primary_date_start' => $primaryDateStart,
+            'primary_date_end' => $primaryDateEnd,
+            'secondary_date_start' => $hasSecondaryDate ? $secondaryDateStart : null,
+            'secondary_date_end' => $hasSecondaryDate ? $secondaryDateEnd : null,
         ];
     }
 }

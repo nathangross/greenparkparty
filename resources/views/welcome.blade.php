@@ -16,7 +16,7 @@
                     Thank you to everyone who joined us at this year's Green Park Party!
                 </p>
                 <p class="mt-4 text-2xl">
-                    We hope you had a wonderful time. See you in {{ $party->primary_date_start->addYear()->format('Y') }}!
+                    We hope you had a wonderful time. See you in {{ $party->primary_date_start->copy()->addYear()->format('Y') }}!
                 </p>
             @else
                 <p class="text-balance text-4xl">
@@ -117,7 +117,7 @@
                         RSVPs for this year's party have closed. We're grateful to all who joined us and made it a memorable celebration!
                     </p>
                     <p class="mt-4 text-lg text-gray-700">
-                        Mark your calendars for next summer. See you in {{ $party ? $party->primary_date_start->addYear()->format('Y') : date('Y') + 1 }}!
+                        Mark your calendars for next summer. See you in {{ $party ? $party->primary_date_start->copy()->addYear()->format('Y') : date('Y') + 1 }}!
                     </p>
                 </div>
             </x-layouts.inner>

@@ -50,6 +50,8 @@ rules([
 $save = function () {
     $shouldNotifyAdmin = false;
     $adminNotifyRsvp = null;
+    $shouldNotifyUser = false;
+    $userToNotify = null;
     if (!$this->isAcceptingRsvps) {
         $this->dispatch('flash-error', 'RSVPs are not currently open.');
         return;
@@ -76,17 +78,19 @@ $save = function () {
         // Set attending_count to 0 if not attending
         $finalAttendingCount = $showAttending ? $attendingCount : 0;
 
-        // Find or create the user
-        $user = User::updateOrCreate(
-            ['email' => $email ?: null],
-            [
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'phone' => $phone,
-                'street' => $street,
-                'email' => $email ?: null,
-            ],
-        );
+        $normalizedEmail = filled($email) ? mb_strtolower(trim($email)) : null;
+        $userAttributes = [
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'phone' => $phone,
+            'street' => $street,
+            'email' => $normalizedEmail,
+        ];
+
+        // Without a stable identifier like email, always create a new attendee record.
+        $user = $normalizedEmail
+            ? User::updateOrCreate(['email' => $normalizedEmail], $userAttributes)
+            : User::create($userAttributes);
 
         // Find existing RSVP if any
         $existingRsvp = Rsvp::where('user_id', $user->id)->where('party_id', $activeParty->id)->first();
@@ -124,14 +128,14 @@ $save = function () {
 
         // Update Mailchimp contact if email is provided and they've opted in for updates
         // Skip Mailchimp integration in local environment
-        if (!App::environment('local') && $email && ($receiveEmailUpdates || $receiveSmsUpdates)) {
+        if (!App::environment(['local', 'testing']) && $normalizedEmail && ($receiveEmailUpdates || $receiveSmsUpdates)) {
             try {
                 // Get the Mailchimp API instance
                 $mailchimp = Newsletter::getApi();
                 $listId = config('newsletter.lists.subscribers.id');
 
                 // Try to get the subscriber first
-                $subscriberHash = md5(strtolower($email));
+                $subscriberHash = md5($normalizedEmail);
                 try {
                     $existingSubscriber = $mailchimp->get("lists/{$listId}/members/{$subscriberHash}");
                 } catch (\Exception $e) {
@@ -139,7 +143,7 @@ $save = function () {
                 }
 
                 // Subscribe or update the contact
-                $result = Newsletter::subscribeOrUpdate($email, [
+                $result = Newsletter::subscribeOrUpdate($normalizedEmail, [
                     'FNAME' => $firstName,
                     'LNAME' => $lastName,
                     'PHONE' => $phone,

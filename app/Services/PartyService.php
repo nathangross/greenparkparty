@@ -19,8 +19,9 @@ class PartyService
             return false;
         }
 
-        // Close RSVPs the day after the party ends
-        if ($party->primary_date_end && now()->isAfter($party->primary_date_end->endOfDay())) {
+        $deadline = $party->getRsvpDeadline();
+
+        if ($deadline && now()->isAfter($deadline->endOfDay())) {
             return false;
         }
 

@@ -20,7 +20,7 @@ class Party extends Model
         'primary_date_start' => 'datetime',
         'primary_date_end' => 'datetime',
         'secondary_date_start' => 'datetime',
-        'secondary_end_date' => 'datetime',
+        'secondary_date_end' => 'datetime',
     ];
 
     public function rsvps()
@@ -37,6 +37,6 @@ class Party extends Model
      */
     public function getRsvpDeadline()
     {
-        return $this->primary_date_start->subWeeks(1);
+        return $this->primary_date_start?->copy()->subWeek();
     }
 }

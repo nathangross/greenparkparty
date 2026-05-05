@@ -16,7 +16,8 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->email === 'nathan@bldg13.com';
+        return (bool) $this->is_organizer
+            || in_array($this->email, config('app.admin_emails', []), true);
     }
 
     protected $guarded = [];
@@ -28,6 +29,9 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $casts = [
         'id' => 'integer',
+        'email_verified_at' => 'datetime',
+        'is_organizer' => 'boolean',
+        'password' => 'hashed',
     ];
 
     public function rsvps(): HasMany

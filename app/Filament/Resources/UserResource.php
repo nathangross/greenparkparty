@@ -39,6 +39,9 @@ class UserResource extends Resource
                     ->hiddenOn('create'),
                 Forms\Components\TextInput::make('password')
                     ->password()
+                    ->formatStateUsing(fn () => '')
+                    ->dehydrated(fn (?string $state): bool => filled($state))
+                    ->required(fn (string $operation): bool => $operation === 'create')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('phone')
                     ->tel()
