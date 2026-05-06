@@ -109,7 +109,7 @@
                             }"
                             class="grid gap-4"
                         >
-                            <div class="grid gap-3 text-left sm:grid-cols-2">
+                            <div class="mx-auto grid w-full max-w-3xl justify-center gap-3 text-left sm:grid-cols-2">
                             @if (isset($publicRsvps))
                                 @foreach ($publicRsvps as $rsvp)
                                     @php
@@ -124,7 +124,7 @@
                                     @endphp
                                     <div
                                         x-show="{{ $index }} >= (page - 1) * perPage && {{ $index }} < page * perPage"
-                                        class="rounded-lg bg-white/70 px-4 py-3 shadow-sm"
+                                        class="w-full min-w-0 max-w-sm rounded-lg bg-white/70 px-4 py-3 shadow-sm"
                                     >
                                         <div class="font-bold">{{ $firstName }}{{ $lastInitial }}</div>
                                         <div class="text-sm text-green-dark/70">{{ $attendingLabel }}</div>
@@ -137,7 +137,7 @@
                                 @endforeach
                             @endif
                             @if (isset($privateAttendingCount) && $privateAttendingCount > 0)
-                                <div class="border-green-dark/10 bg-green-dark/5 rounded-lg border px-4 py-3">
+                                <div class="border-green-dark/10 bg-green-dark/5 w-full min-w-0 max-w-sm rounded-lg border px-4 py-3">
                                     <div class="font-bold">
                                         And {{ $privateAttendingCount }} more!
                                     </div>
