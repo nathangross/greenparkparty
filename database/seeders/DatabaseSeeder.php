@@ -16,19 +16,29 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::create([
-            'name' => 'nathangross',
-            'first_name' => 'Nathan',
-            'last_name' => 'Gross',
-            'email' => 'nathan@bldg13.com',
-            'is_organizer' => true,
-            'password' => bcrypt(env('ADMIN_PASSWORD')),
-        ]);
+        User::updateOrCreate(
+            ['email' => 'nathan@bldg13.com'],
+            [
+                'name' => 'nathangross',
+                'first_name' => 'Nathan',
+                'last_name' => 'Gross',
+                'email' => 'nathan@bldg13.com',
+                'is_organizer' => true,
+                'password' => bcrypt(env('ADMIN_PASSWORD')),
+            ],
+        );
 
-        Party::create([
-            'title' => '2024',
-            'primary_date_start' => '2024-06-29 17:00:00',
-            'primary_date_end' => '2024-06-29 18:00:00',
-        ]);
+        Party::query()->update(['is_active' => false]);
+
+        Party::updateOrCreate(
+            ['title' => '2026'],
+            [
+                'is_active' => true,
+                'primary_date_start' => '2026-06-27 16:00:00',
+                'primary_date_end' => '2026-06-27 20:00:00',
+                'secondary_date_start' => '2026-06-28 16:00:00',
+                'secondary_date_end' => '2026-06-28 20:00:00',
+            ],
+        );
     }
 }
