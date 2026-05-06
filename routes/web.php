@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Party;
+use App\Models\PartyUpdate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,18 @@ Route::get('/', function () {
         ? $lastYearParty->rsvps()->sum('attending_count')
         : null;
 
+    $updates = PartyUpdate::query()
+        ->published()
+        ->where(function ($query) use ($party) {
+            $query->whereNull('party_id');
+
+            if ($party) {
+                $query->orWhere('party_id', $party->id);
+            }
+        })
+        ->latest('published_at')
+        ->get();
+
     return view('welcome', [
         'party' => $party,
         'publicRsvps' => $publicRsvps,
@@ -43,6 +56,7 @@ Route::get('/', function () {
         'expectedAttendeeCount' => $expectedAttendeeCount,
         'lastYearParty' => $lastYearParty,
         'lastYearAttendeeCount' => $lastYearAttendeeCount,
+        'updates' => $updates,
     ]);
 })->name('welcome');
 

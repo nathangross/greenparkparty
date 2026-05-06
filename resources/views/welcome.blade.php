@@ -204,6 +204,30 @@
             </div>
         </x-layouts.inner>
     </section>
+    @if (isset($updates) && $updates->isNotEmpty())
+        <section id="updates" class="w-full bg-white/80 py-12 lg:py-20">
+            <x-layouts.inner class="max-w-3xl">
+                <div class="text-center">
+                    <x-headings.hero>Updates</x-headings.hero>
+                    <p class="mt-2 text-green-dark/70">Latest party notes, newest first.</p>
+                </div>
+
+                <div class="mt-8 grid gap-4">
+                    @foreach ($updates as $update)
+                        <article class="border-green-dark/10 bg-green-dark/5 rounded-xl border p-5 text-left shadow-sm">
+                            <div class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                                <h3 class="text-xl font-bold">{{ $update->title }}</h3>
+                                <time class="text-sm text-green-dark/60" datetime="{{ $update->published_at->toDateString() }}">
+                                    {{ $update->published_at->format('F j, Y') }}
+                                </time>
+                            </div>
+                            <div class="mt-3 whitespace-pre-line text-green-dark/80">{{ $update->body }}</div>
+                        </article>
+                    @endforeach
+                </div>
+            </x-layouts.inner>
+        </section>
+    @endif
     @php
         $partyService = app(\App\Services\PartyService::class);
         $isAcceptingRsvps = $partyService->isAcceptingRsvps();

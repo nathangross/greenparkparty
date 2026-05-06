@@ -3,6 +3,7 @@
 use App\Models\Rsvp;
 use App\Models\User;
 use App\Models\Party;
+use App\Models\PartyUpdate;
 use Livewire\Volt\Volt;
 use Tests\Feature\Traits\WithViewComposer;
 use Tests\Feature\Traits\WithNewsletterMock;
@@ -236,6 +237,75 @@ test('homepage shows expected attendee count and last year count', function () {
         ->assertSee('2025 yes RSVPs')
         ->assertSee('7')
         ->assertSee('12');
+});
+
+test('homepage shows published updates newest first', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    PartyUpdate::factory()->create([
+        'party_id' => $party->id,
+        'title' => 'Older update',
+        'body' => 'This happened first.',
+        'is_published' => true,
+        'published_at' => Carbon::parse('2026-05-01 09:00:00'),
+    ]);
+
+    PartyUpdate::factory()->create([
+        'party_id' => $party->id,
+        'title' => 'Newer update',
+        'body' => 'This happened second.',
+        'is_published' => true,
+        'published_at' => Carbon::parse('2026-05-02 09:00:00'),
+    ]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('Updates')
+        ->assertSeeInOrder(['Newer update', 'Older update'])
+        ->assertSee('This happened second.')
+        ->assertSee('This happened first.');
+});
+
+test('homepage hides draft future and unrelated party updates', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $otherParty = Party::factory()->create(['is_active' => false]);
+    $this->setUpViewComposer($party);
+
+    PartyUpdate::factory()->create([
+        'party_id' => null,
+        'title' => 'General published update',
+        'is_published' => true,
+        'published_at' => Carbon::parse('2026-05-01 09:00:00'),
+    ]);
+
+    PartyUpdate::factory()->create([
+        'party_id' => $party->id,
+        'title' => 'Draft update',
+        'is_published' => false,
+        'published_at' => Carbon::parse('2026-05-01 09:00:00'),
+    ]);
+
+    PartyUpdate::factory()->create([
+        'party_id' => $party->id,
+        'title' => 'Future update',
+        'is_published' => true,
+        'published_at' => now()->addDay(),
+    ]);
+
+    PartyUpdate::factory()->create([
+        'party_id' => $otherParty->id,
+        'title' => 'Other party update',
+        'is_published' => true,
+        'published_at' => Carbon::parse('2026-05-01 09:00:00'),
+    ]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('General published update')
+        ->assertDontSee('Draft update')
+        ->assertDontSee('Future update')
+        ->assertDontSee('Other party update');
 });
 
 test('homepage shows anonymous private attendee count when no RSVPs are public', function () {
