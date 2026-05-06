@@ -26,6 +26,7 @@ class Rsvp extends Model
         'volunteer' => 'boolean',
         'receive_email_updates' => 'boolean',
         'receive_sms_updates' => 'boolean',
+        'show_on_homepage' => 'boolean',
     ];
 
     public function party(): BelongsTo

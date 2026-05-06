@@ -5,7 +5,45 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    $party = Party::where('is_active', true)->first()
+        ?? Party::latest('primary_date_start')->first();
+
+    $publicRsvps = $party
+        ? $party->rsvps()
+            ->with('user')
+            ->where('show_on_homepage', true)
+            ->latest()
+            ->get()
+        : collect();
+
+    $privateAttendingCount = $party
+        ? $party->rsvps()
+            ->where('show_on_homepage', false)
+            ->sum('attending_count')
+        : 0;
+
+    $expectedAttendeeCount = $party
+        ? $party->rsvps()->sum('attending_count')
+        : 0;
+
+    $lastYearParty = $party
+        ? Party::where('primary_date_start', '<', $party->primary_date_start)
+            ->latest('primary_date_start')
+            ->first()
+        : null;
+
+    $lastYearAttendeeCount = $lastYearParty
+        ? $lastYearParty->rsvps()->sum('attending_count')
+        : null;
+
+    return view('welcome', [
+        'party' => $party,
+        'publicRsvps' => $publicRsvps,
+        'privateAttendingCount' => $privateAttendingCount,
+        'expectedAttendeeCount' => $expectedAttendeeCount,
+        'lastYearParty' => $lastYearParty,
+        'lastYearAttendeeCount' => $lastYearAttendeeCount,
+    ]);
 })->name('welcome');
 
 Route::view('claybourne-grille', 'menu')->name('menu');

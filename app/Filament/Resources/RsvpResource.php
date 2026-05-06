@@ -56,8 +56,14 @@ class RsvpResource extends Resource
                     ->default(0),
                 Forms\Components\Toggle::make('volunteer')
                     ->required(),
+                Forms\Components\Toggle::make('show_on_homepage')
+                    ->label('Show on homepage'),
+                Forms\Components\Textarea::make('public_message')
+                    ->label('Public message')
+                    ->columnSpanFull()
+                    ->rows(3),
                 Forms\Components\Textarea::make('message_text')
-                    ->label('Message')
+                    ->label('Private message')
                     ->columnSpanFull()
                     ->rows(4)
             ]);
@@ -90,6 +96,11 @@ class RsvpResource extends Resource
                 Tables\Columns\IconColumn::make('volunteer')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('message_text')
+                    ->label('Private Message')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('public_message')
+                    ->label('Public Message')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('has_message')
@@ -108,6 +119,12 @@ class RsvpResource extends Resource
                     ->label('Can Text')
                     ->boolean()
                     ->getStateUsing(fn ($record) => $record->receive_sms_updates)
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+                Tables\Columns\IconColumn::make('show_on_homepage')
+                    ->label('Public')
+                    ->boolean()
+                    ->getStateUsing(fn ($record) => $record->show_on_homepage)
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('created_at')

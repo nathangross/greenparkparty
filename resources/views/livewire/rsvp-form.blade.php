@@ -25,9 +25,11 @@ state([
     'attending_count' => 1,
     'volunteer' => false,
     'message_text' => '',
+    'public_message' => '',
     'showForm' => true,
     'receive_email_updates' => false,
     'receive_sms_updates' => false,
+    'show_on_homepage' => false,
 ]);
 
 $activeParty = computed(fn() => app(PartyService::class)->getActiveParty());
@@ -43,8 +45,10 @@ rules([
     'attending_count' => 'required_if:showAttending,true|numeric|min:0',
     'volunteer' => 'nullable|boolean',
     'message_text' => 'nullable',
+    'public_message' => 'nullable|max:160',
     'receive_email_updates' => 'nullable|boolean',
     'receive_sms_updates' => 'nullable|boolean',
+    'show_on_homepage' => 'nullable|boolean',
 ]);
 
 $save = function () {
@@ -68,13 +72,15 @@ $save = function () {
     $attendingCount = $this->attending_count;
     $volunteer = $this->volunteer;
     $messageText = $this->message_text;
+    $publicMessage = $this->public_message;
     $receiveEmailUpdates = $this->receive_email_updates;
     $receiveSmsUpdates = $this->receive_sms_updates;
+    $showOnHomepage = $this->show_on_homepage;
     $activeParty = $this->activeParty;
     $partyYear = $this->partyYear;
     $showAttending = $this->showAttending;
 
-    DB::transaction(function () use (&$shouldNotifyAdmin, &$adminNotifyRsvp, &$shouldNotifyUser, &$userToNotify, $firstName, $lastName, $email, $phone, $street, $attendingCount, $volunteer, $messageText, $receiveEmailUpdates, $receiveSmsUpdates, $activeParty, $partyYear, $showAttending) {
+    DB::transaction(function () use (&$shouldNotifyAdmin, &$adminNotifyRsvp, &$shouldNotifyUser, &$userToNotify, $firstName, $lastName, $email, $phone, $street, $attendingCount, $volunteer, $messageText, $publicMessage, $receiveEmailUpdates, $receiveSmsUpdates, $showOnHomepage, $activeParty, $partyYear, $showAttending) {
         // Set attending_count to 0 if not attending
         $finalAttendingCount = $showAttending ? $attendingCount : 0;
 
@@ -115,8 +121,10 @@ $save = function () {
                 'attending_count' => $finalAttendingCount,
                 'volunteer' => $volunteer,
                 'message_text' => $message,
+                'public_message' => $showOnHomepage ? $publicMessage : null,
                 'receive_email_updates' => $receiveEmailUpdates,
                 'receive_sms_updates' => $receiveSmsUpdates,
+                'show_on_homepage' => $showOnHomepage,
             ],
         );
 
@@ -258,7 +266,7 @@ $generateUniqueIdentifier = function () {
                 @endif
                 <x-forms.fieldset
                     legend="Will you be attending this year?">
-                    <div x-data="{ showAttending: @entangle('showAttending') }">
+                    <div x-data="{ showAttending: @js((bool) $showAttending) }">
                         <div class="flex flex-col gap-8">
                             <div class="mt-4 grid gap-8 lg:grid-cols-2">
                                 <label for="attending_yes"
@@ -344,9 +352,37 @@ $generateUniqueIdentifier = function () {
                                 I'm ok to receive SMS updates about the party
                             </x-input.label>
                         </div>
+                        <div x-data="{ showOnHomepage: @js((bool) $show_on_homepage) }"
+                            class="border-green-dark/10 bg-green-dark/5 mt-2 grid gap-4 rounded-lg border p-4">
+                            <div class="flex items-start gap-2">
+                                <input type="checkbox" id="show_on_homepage" name="show_on_homepage"
+                                    wire:model="show_on_homepage" x-model="showOnHomepage" class="mt-1">
+                                <div>
+                                    <x-input.label for="show_on_homepage">
+                                        Show my RSVP status on the homepage
+                                    </x-input.label>
+                                    <p class="mt-1 text-sm italic text-gray-700">
+                                        We'll only show your name and whether you're attending. Contact details and notes stay private.
+                                    </p>
+                                </div>
+                            </div>
+                            <div x-show="showOnHomepage" x-cloak>
+                                <x-input.label for="public_message">
+                                    Public note <span class="text-sm text-gray-700">(optional)</span>
+                                </x-input.label>
+                                <textarea name="public_message" id="public_message" class="border-green-dark mt-1 h-24 w-full rounded-lg border"
+                                    wire:model="public_message" maxlength="160"></textarea>
+                                <p class="mt-1 text-sm italic text-gray-700">
+                                    This can appear with your RSVP.
+                                </p>
+                                @error('public_message')
+                                    <div class="mt-1 text-sm text-red-600">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
 
                         <div class="">
-                            <x-input.label for="message_text">Leave us a note </x-input.label>
+                            <x-input.label for="message_text">Private note for organizers </x-input.label>
                             <textarea name="message_text" id="message_text" class="border-green-dark mt-1 h-32 w-full rounded-lg border"
                                 wire:model="message_text"></textarea>
                             @error('message_text')

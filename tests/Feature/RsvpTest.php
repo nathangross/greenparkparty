@@ -118,8 +118,195 @@ test('optional fields are correctly handled', function () {
         'attending_count' => 1,
         'volunteer' => 0,
         'message_text' => null,
+        'public_message' => null,
         'receive_email_updates' => 0,
         'receive_sms_updates' => 0,
+        'show_on_homepage' => 0,
+    ]);
+});
+
+test('user can opt in to show RSVP status on the homepage', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    Volt::test('rsvp-form')
+        ->set('first_name', 'Macey')
+        ->set('last_name', 'Gross')
+        ->set('showAttending', true)
+        ->set('attending_count', 4)
+        ->set('show_on_homepage', true)
+        ->set('public_message', "Can't wait to see everyone!")
+        ->set('message_text', 'I can help with setup.')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseHas('rsvps', [
+        'user_id' => User::where('first_name', 'Macey')->first()->id,
+        'party_id' => $party->id,
+        'attending_count' => 4,
+        'show_on_homepage' => 1,
+        'public_message' => "Can't wait to see everyone!",
+        'message_text' => 'New message: I can help with setup. ',
+    ]);
+});
+
+test('homepage shows only opted in RSVP statuses', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    $visibleUser = User::factory()->create([
+        'first_name' => 'Nathan',
+        'last_name' => 'Gross',
+    ]);
+
+    $privateUser = User::factory()->create([
+        'first_name' => 'Private',
+        'last_name' => 'Neighbor',
+    ]);
+
+    Rsvp::factory()->create([
+        'party_id' => $party->id,
+        'user_id' => $visibleUser->id,
+        'attending_count' => 2,
+        'show_on_homepage' => true,
+        'public_message' => "Can't wait to see everyone!",
+        'message_text' => 'Private setup note',
+    ]);
+
+    Rsvp::factory()->create([
+        'party_id' => $party->id,
+        'user_id' => $privateUser->id,
+        'attending_count' => 3,
+        'show_on_homepage' => false,
+        'public_message' => 'This should stay hidden.',
+    ]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee("Who's RSVPed?", false)
+        ->assertSee('Nathan G.')
+        ->assertSee('2 attending')
+        ->assertSee("Can't wait to see everyone!")
+        ->assertSee('And 3 more!')
+        ->assertSee('Additional neighbors are planning to come.')
+        ->assertDontSee('Private setup note')
+        ->assertDontSee('Private N.')
+        ->assertDontSee('This should stay hidden.')
+        ->assertDontSee('3 attending');
+});
+
+test('homepage shows expected attendee count and last year count', function () {
+    $lastYearParty = Party::factory()->create([
+        'is_active' => false,
+        'primary_date_start' => Carbon::parse('2025-06-28 16:00:00'),
+    ]);
+
+    $party = Party::factory()->create([
+        'is_active' => true,
+        'primary_date_start' => Carbon::parse('2026-06-27 16:00:00'),
+    ]);
+
+    $this->setUpViewComposer($party);
+
+    Rsvp::factory()->create([
+        'party_id' => $lastYearParty->id,
+        'attending_count' => 7,
+    ]);
+
+    Rsvp::factory()->create([
+        'party_id' => $lastYearParty->id,
+        'attending_count' => 5,
+    ]);
+
+    Rsvp::factory()->create([
+        'party_id' => $party->id,
+        'attending_count' => 4,
+        'show_on_homepage' => true,
+    ]);
+
+    Rsvp::factory()->create([
+        'party_id' => $party->id,
+        'attending_count' => 3,
+        'show_on_homepage' => false,
+    ]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('Expected this year')
+        ->assertSee('2025')
+        ->assertSee('7')
+        ->assertSee('12');
+});
+
+test('homepage shows anonymous private attendee count when no RSVPs are public', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    $privateUser = User::factory()->create([
+        'first_name' => 'Hidden',
+        'last_name' => 'Neighbor',
+    ]);
+
+    Rsvp::factory()->create([
+        'party_id' => $party->id,
+        'user_id' => $privateUser->id,
+        'attending_count' => 2,
+        'show_on_homepage' => false,
+        'public_message' => 'This should stay hidden.',
+    ]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee("Who's RSVPed?", false)
+        ->assertSee('And 2 more!')
+        ->assertSee('Additional neighbors are planning to come.')
+        ->assertDontSee('Hidden N.')
+        ->assertDontSee('This should stay hidden.')
+        ->assertDontSee('2 attending');
+});
+
+test('homepage does not count private not attending RSVPs as private attendees', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    $privateUser = User::factory()->create([
+        'first_name' => 'Unavailable',
+        'last_name' => 'Neighbor',
+    ]);
+
+    Rsvp::factory()->create([
+        'party_id' => $party->id,
+        'user_id' => $privateUser->id,
+        'attending_count' => 0,
+        'show_on_homepage' => false,
+    ]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertDontSee("Who's RSVPed?", false)
+        ->assertDontSee('And 0 more!')
+        ->assertDontSee('Unavailable N.');
+});
+
+test('public note is not saved when homepage opt in is disabled', function () {
+    $party = Party::factory()->create(['is_active' => true]);
+    $this->setUpViewComposer($party);
+
+    Volt::test('rsvp-form')
+        ->set('first_name', 'Jordan')
+        ->set('last_name', 'Neighbor')
+        ->set('showAttending', true)
+        ->set('attending_count', 1)
+        ->set('show_on_homepage', false)
+        ->set('public_message', 'Please do not publish this.')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseHas('rsvps', [
+        'user_id' => User::where('first_name', 'Jordan')->first()->id,
+        'party_id' => $party->id,
+        'show_on_homepage' => 0,
+        'public_message' => null,
     ]);
 });
 

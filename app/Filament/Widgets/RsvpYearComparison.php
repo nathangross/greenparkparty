@@ -7,8 +7,7 @@ use App\Models\Party;
 use App\Filament\Traits\HasOrganizerToggle;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
 
 class RsvpYearComparison extends BaseWidget
 {
@@ -41,8 +40,8 @@ class RsvpYearComparison extends BaseWidget
                 Stat::make('Total Attending', $this->getPartyAttendance($activeParty))
                     ->description($activeParty->title . $description)
                     ->color('primary'),
-                Stat::make('Total RSVPs', $this->getPartyRsvpCount($activeParty))
-                    ->description('Total Responses' . $description)
+                Stat::make('Households Responded', $this->getPartyRespondedCount($activeParty))
+                    ->description('RSVP records' . $description)
                     ->color('primary'),
                 Stat::make('Average Group Size', $this->calculateAverageGroupSize($activeParty))
                     ->description('People per RSVP' . $description)
@@ -57,8 +56,8 @@ class RsvpYearComparison extends BaseWidget
         $previousAttending = $this->getPartyAttendance($previousParty);
         $attendingDiff = $this->calculatePercentageDiff($currentAttending, $previousAttending);
 
-        $currentRsvps = $this->getPartyRsvpCount($activeParty);
-        $previousRsvps = $this->getPartyRsvpCount($previousParty);
+        $currentRsvps = $this->getPartyRespondedCount($activeParty);
+        $previousRsvps = $this->getPartyRespondedCount($previousParty);
         $rsvpsDiff = $this->calculatePercentageDiff($currentRsvps, $previousRsvps);
 
         $currentAvgSize = $this->calculateAverageGroupSize($activeParty);
@@ -71,69 +70,77 @@ class RsvpYearComparison extends BaseWidget
 
         return [
             Stat::make('Total Attending', $currentAttending)
-                ->description("vs {$previousAttending} last year ({$attendingDiff}%){$description}")
-                ->descriptionIcon($attendingDiff >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
-                ->color($attendingDiff >= 0 ? 'success' : 'danger'),
+                ->description($this->comparisonDescription($previousAttending, $attendingDiff, $description))
+                ->descriptionIcon($this->trendIcon($attendingDiff))
+                ->color($this->trendColor($attendingDiff)),
 
-            Stat::make('Total RSVPs', $currentRsvps)
-                ->description("vs {$previousRsvps} last year ({$rsvpsDiff}%){$description}")
-                ->descriptionIcon($rsvpsDiff >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
-                ->color($rsvpsDiff >= 0 ? 'success' : 'danger'),
+            Stat::make('Households Responded', $currentRsvps)
+                ->description($this->comparisonDescription($previousRsvps, $rsvpsDiff, $description))
+                ->descriptionIcon($this->trendIcon($rsvpsDiff))
+                ->color($this->trendColor($rsvpsDiff)),
 
             Stat::make('Average Group Size', number_format($currentAvgSize, 1))
-                ->description("vs " . number_format($previousAvgSize, 1) . " last year ({$avgSizeDiff}%){$description}")
-                ->descriptionIcon($avgSizeDiff >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
-                ->color($avgSizeDiff >= 0 ? 'success' : 'danger'),
+                ->description($this->comparisonDescription(number_format($previousAvgSize, 1), $avgSizeDiff, $description))
+                ->descriptionIcon($this->trendIcon($avgSizeDiff))
+                ->color($this->trendColor($avgSizeDiff)),
 
             Stat::make('Total Volunteers', $currentVolunteers)
-                ->description("vs {$previousVolunteers} last year ({$volunteersDiff}%)")
-                ->descriptionIcon($volunteersDiff >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
-                ->color($volunteersDiff >= 0 ? 'success' : 'danger'),
+                ->description($this->comparisonDescription($previousVolunteers, $volunteersDiff, $description))
+                ->descriptionIcon($this->trendIcon($volunteersDiff))
+                ->color($this->trendColor($volunteersDiff)),
         ];
     }
 
-    protected function calculatePercentageDiff($current, $previous): string
+    protected function calculatePercentageDiff(float|int $current, float|int $previous): ?string
     {
-        if ($previous == 0) return '∞';
+        if ($previous == 0) {
+            return null;
+        }
+
         $diff = (($current - $previous) / $previous) * 100;
         return number_format($diff, 1);
     }
 
-    protected function getPartyAttendance(Party $party): int
+    protected function comparisonDescription(string|int|float $previous, ?string $diff, string $suffix = ''): string
     {
-        $query = Rsvp::where('party_id', $party->id);
-
-        if (!$this->includeOrganizers) {
-            $query->whereHas('user', function ($query) {
-                $query->where('is_organizer', false);
-            });
+        if ($diff === null) {
+            return "vs {$previous} last year{$suffix}";
         }
 
-        return $query->sum('attending_count');
+        return "vs {$previous} last year ({$diff}%){$suffix}";
     }
 
-    protected function getPartyRsvpCount(Party $party): int
+    protected function trendIcon(?string $diff): ?string
     {
-        $query = Rsvp::where('party_id', $party->id);
-
-        if (!$this->includeOrganizers) {
-            $query->whereHas('user', function ($query) {
-                $query->where('is_organizer', false);
-            });
+        if ($diff === null) {
+            return null;
         }
 
-        return $query->count();
+        return (float) $diff >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down';
+    }
+
+    protected function trendColor(?string $diff): string
+    {
+        if ($diff === null) {
+            return 'gray';
+        }
+
+        return (float) $diff >= 0 ? 'success' : 'danger';
+    }
+
+    protected function getPartyAttendance(Party $party): int
+    {
+        return $this->partyRsvps($party)->sum('attending_count');
+    }
+
+    protected function getPartyRespondedCount(Party $party): int
+    {
+        return $this->partyRsvps($party)->count();
     }
 
     protected function calculateAverageGroupSize(Party $party): float
     {
-        $query = Rsvp::where('party_id', $party->id);
-
-        if (!$this->includeOrganizers) {
-            $query->whereHas('user', function ($query) {
-                $query->where('is_organizer', false);
-            });
-        }
+        $query = $this->partyRsvps($party)->where('attending_count', '>', 0);
             
         $count = $query->count();
         return $count > 0 ? $query->sum('attending_count') / $count : 0;
@@ -141,6 +148,19 @@ class RsvpYearComparison extends BaseWidget
 
     protected function getPartyVolunteers(Party $party): int
     {
-        return Rsvp::where('party_id', $party->id)->sum('volunteer');
+        return $this->partyRsvps($party)->where('volunteer', true)->count();
+    }
+
+    protected function partyRsvps(Party $party): Builder
+    {
+        $query = Rsvp::where('party_id', $party->id);
+
+        if (!$this->includeOrganizers) {
+            $query->whereHas('user', function (Builder $query) {
+                $query->where('is_organizer', false);
+            });
+        }
+
+        return $query;
     }
 } 

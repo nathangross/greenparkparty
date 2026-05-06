@@ -7,6 +7,7 @@ use App\Models\Party;
 use App\Filament\Traits\HasOrganizerToggle;
 use Filament\Widgets\ChartWidget;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class RsvpTrendChart extends ChartWidget
@@ -82,15 +83,8 @@ class RsvpTrendChart extends ChartWidget
 
     protected function getPartyRsvpTrend(Party $party): array
     {
-        $query = Rsvp::where('party_id', $party->id);
-
-        if (!$this->includeOrganizers) {
-            $query->whereHas('user', function ($query) {
-                $query->where('is_organizer', false);
-            });
-        }
-
-        $rsvps = $query->select([
+        $rsvps = $this->partyRsvps($party)
+            ->select([
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('SUM(attending_count) as total_attending')
             ])
@@ -133,7 +127,7 @@ class RsvpTrendChart extends ChartWidget
                 'y' => [
                     'title' => [
                         'display' => true,
-                        'text' => 'Total RSVPs',
+                        'text' => 'Expected Attendees',
                     ],
                     'beginAtZero' => true,
                 ],
@@ -144,5 +138,18 @@ class RsvpTrendChart extends ChartWidget
     public static function getSort(): int
     {
         return 3;
+    }
+
+    protected function partyRsvps(Party $party): Builder
+    {
+        $query = Rsvp::where('party_id', $party->id);
+
+        if (!$this->includeOrganizers) {
+            $query->whereHas('user', function (Builder $query) {
+                $query->where('is_organizer', false);
+            });
+        }
+
+        return $query;
     }
 } 

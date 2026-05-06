@@ -61,8 +61,14 @@ class AdminRsvpNotification extends Notification implements ShouldQueue
 
         if ($this->rsvp->message_text) {
             $message->line('')
-                ->line('**Message from Attendee:**')
+                ->line('**Private Message from Attendee:**')
                 ->line($this->rsvp->message_text);
+        }
+
+        if ($this->rsvp->public_message) {
+            $message->line('')
+                ->line('**Public Homepage Message:**')
+                ->line($this->rsvp->public_message);
         }
 
         return $message;
