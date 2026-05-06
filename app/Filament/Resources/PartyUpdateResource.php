@@ -31,23 +31,34 @@ class PartyUpdateResource extends Resource
                     ->label('Party')
                     ->helperText('Leave blank for a general update.')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('title')
                     ->required()
-                    ->maxLength(255),
-                Forms\Components\Textarea::make('body')
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+                Forms\Components\RichEditor::make('body')
                     ->required()
-                    ->rows(5)
+                    ->toolbarButtons([
+                        'bold',
+                        'italic',
+                        'bulletList',
+                        'orderedList',
+                        'link',
+                        'undo',
+                        'redo',
+                    ])
                     ->columnSpanFull(),
                 Forms\Components\Toggle::make('is_published')
                     ->label('Published')
+                    ->helperText('Turn this on when the update is ready to appear publicly.')
                     ->default(false)
                     ->live(),
                 Forms\Components\DateTimePicker::make('published_at')
                     ->label('Publish date')
                     ->seconds(false)
-                    ->default(now())
-                    ->helperText('Published updates appear on the homepage once this date arrives.'),
+                    ->visible(fn (Forms\Get $get): bool => (bool) $get('is_published'))
+                    ->helperText('Leave blank to publish immediately when saved. Use a future date to schedule.'),
             ]);
     }
 

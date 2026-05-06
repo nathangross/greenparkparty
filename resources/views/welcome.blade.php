@@ -221,7 +221,7 @@
                                     {{ $update->published_at->format('F j, Y') }}
                                 </time>
                             </div>
-                            <div class="mt-3 whitespace-pre-line text-green-dark/80">{{ $update->body }}</div>
+                            <div class="prose prose-sm mt-3 max-w-none text-green-dark/80">{!! str($update->body)->sanitizeHtml() !!}</div>
                         </article>
                     @endforeach
                 </div>

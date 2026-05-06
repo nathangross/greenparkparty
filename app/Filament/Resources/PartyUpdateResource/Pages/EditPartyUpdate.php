@@ -16,4 +16,15 @@ class EditPartyUpdate extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if ($data['is_published'] ?? false) {
+            $data['published_at'] ??= now();
+        } else {
+            $data['published_at'] = null;
+        }
+
+        return $data;
+    }
 }
