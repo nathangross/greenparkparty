@@ -15,6 +15,7 @@ class PartyUpdate extends Model
     protected $casts = [
         'is_published' => 'boolean',
         'published_at' => 'datetime',
+        'mailchimp_sent_at' => 'datetime',
     ];
 
     public function party()

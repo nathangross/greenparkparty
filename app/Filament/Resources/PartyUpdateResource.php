@@ -82,6 +82,15 @@ class PartyUpdateResource extends Resource
                     ->label('Publish date')
                     ->dateTime()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('mailchimp_campaign_id')
+                    ->label('Mailchimp Draft')
+                    ->placeholder('Not created')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('mailchimp_sent_at')
+                    ->label('Mailchimp Sent')
+                    ->dateTime()
+                    ->placeholder('Not sent')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
