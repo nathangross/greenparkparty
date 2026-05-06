@@ -45,8 +45,65 @@
 
 </head>
 
+@php
+    $shareTitle = $party ? $party->primary_date_start->format('F j, Y') . ' - Green Park Party' : 'Green Park Party';
+    $shareText = $party
+        ? 'Join us at the Green Park Party and RSVP online.'
+        : 'Come join us at the Green Park Party!';
+@endphp
+
 <body id="top"
-    x-data="{ isScrolled: false }"
+    x-data="{
+        isScrolled: false,
+        shareLabel: 'Share',
+        shareTitle: @js($shareTitle),
+        shareText: @js($shareText),
+        shareUrl: @js(route('welcome')),
+        shareResetTimer: null,
+        setShareLabel(label) {
+            this.shareLabel = label;
+
+            if (this.shareResetTimer) {
+                clearTimeout(this.shareResetTimer);
+            }
+
+            this.shareResetTimer = setTimeout(() => {
+                this.shareLabel = 'Share';
+            }, 2500);
+        },
+        async sharePage() {
+            const shareData = {
+                title: this.shareTitle,
+                text: this.shareText,
+                url: this.shareUrl,
+            };
+
+            try {
+                if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+                    await navigator.share(shareData);
+                    this.setShareLabel('Shared');
+                    return;
+                }
+            } catch (error) {
+                if (error?.name === 'AbortError') {
+                    return;
+                }
+            }
+
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(this.shareUrl);
+                    this.setShareLabel('Link copied');
+                    return;
+                }
+            } catch (error) {
+                // Fall through to a manual copy prompt if clipboard access is unavailable.
+            }
+
+            window.prompt('Copy this link:', this.shareUrl);
+            this.setShareLabel('Copy link');
+        },
+    }"
     class="bg-green text-green-dark font-sans antialiased">
 
     <nav :class="isScrolled ? 'shadow-lg grid-rows-[1fr] py-3' : ' grid-rows-[0fr]'"
@@ -61,22 +118,9 @@
             <a href="{{ route('welcome') }}#rsvp" class="group">
                 <x-navigation.item>RSVP</x-navigation.item>
             </a>
-            <button
-                x-data
-                @click="
-                    if (navigator.share) {
-                        navigator.share({
-                            title: 'Party RSVP',
-                            text: 'Come join us at the party!',
-                            url: window.location.href,
-                        });
-                    } else {
-                        alert('Sharing is not supported.');
-                    }
-                "
-                class="group">
+            <button type="button" @click="sharePage()" class="group">
                 <x-navigation.item>
-                    Share
+                    <span x-text="shareLabel">Share</span>
                 </x-navigation.item>
             </button>
         </div>
@@ -89,22 +133,9 @@
             <a href="{{ route('welcome') }}#rsvp" class="group">
                 <x-navigation.item dark>RSVP</x-navigation.item>
             </a>
-            <button
-                x-data
-                @click="
-                    if (navigator.share) {
-                        navigator.share({
-                            title: 'Party RSVP',
-                            text: 'Come join us at the party!',
-                            url: window.location.href,
-                        });
-                    } else {
-                        alert('Sharing is not supported.');
-                    }
-                "
-                class="group">
+            <button type="button" @click="sharePage()" class="group">
                 <x-navigation.item dark>
-                    Share
+                    <span x-text="shareLabel">Share</span>
                 </x-navigation.item>
             </button>
         </div>

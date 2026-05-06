@@ -3,7 +3,7 @@
     <section class="w-full px-4 py-12 lg:py-24">
 
         <div class="mx-auto flex w-full max-w-2xl items-center justify-center py-16">
-            <x-logo.reverse />
+            <x-logo.reverse class="h-auto w-full max-w-[424px] lg:max-w-[500px]" />
         </div>
         <div class="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 text-center">
             @php
