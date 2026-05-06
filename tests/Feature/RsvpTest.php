@@ -232,8 +232,8 @@ test('homepage shows expected attendee count and last year count', function () {
 
     $this->get('/')
         ->assertOk()
-        ->assertSee('Expected this year')
-        ->assertSee('2025')
+        ->assertSee('Expected so far this year')
+        ->assertSee('2025 yes RSVPs')
         ->assertSee('7')
         ->assertSee('12');
 });

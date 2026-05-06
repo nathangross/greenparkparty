@@ -79,7 +79,7 @@
                         <div class="bg-green-dark mx-auto grid w-full max-w-xl gap-4 rounded-2xl px-6 py-5 text-center text-white shadow-sm sm:grid-cols-2">
                             <div>
                                 <div class="text-5xl font-bold">{{ number_format($expectedAttendeeCount ?? 0) }}</div>
-                                <div class="mt-1 text-sm uppercase tracking-wide text-white/70">Expected this year</div>
+                                <div class="mt-1 text-sm uppercase tracking-wide text-white/70">Expected so far this year</div>
                             </div>
                             <div class="border-white/20 pt-4 sm:border-l sm:pt-0">
                                 <div class="text-5xl font-bold">
@@ -87,8 +87,8 @@
                                 </div>
                                 <div class="mt-1 text-sm uppercase tracking-wide text-white/70">
                                     {{ isset($lastYearParty) && $lastYearParty?->primary_date_start
-                                        ? $lastYearParty->primary_date_start->format('Y')
-                                        : 'Last year' }}
+                                        ? $lastYearParty->primary_date_start->format('Y') . ' yes RSVPs'
+                                        : 'Last year yes RSVPs' }}
                                 </div>
                             </div>
                         </div>
