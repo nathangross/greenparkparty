@@ -1,11 +1,11 @@
 <x-layouts.app :party="$party">
 
-    <section class="w-full px-4 py-12 lg:py-24">
+    <section class="relative flex min-h-[calc(100svh-9.5rem)] w-full flex-col items-center justify-center px-4 py-6 pb-24">
 
-        <div class="mx-auto flex w-full max-w-2xl items-center justify-center py-16">
-            <x-logo.reverse class="h-auto w-full max-w-[424px] lg:max-w-[500px]" />
+        <div class="mx-auto flex w-full items-center justify-center">
+            <x-logo.reverse class="h-auto w-[min(84vw,48svh,720px)]" />
         </div>
-        <div class="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 text-center">
+        <div class="mx-auto mt-8 flex w-full max-w-2xl flex-col items-center justify-center px-4 text-center lg:mt-10">
             @php
                 $partyService = app(\App\Services\PartyService::class);
                 $isAcceptingRsvps = $partyService->isAcceptingRsvps();
@@ -33,7 +33,7 @@
                     <p class="mt-4">RSVP deadline to be announced.</p>
                 @endif
 
-                <div class="group mt-12 flex flex-col items-center justify-center">
+                <div class="group absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center justify-center">
                     <a href="#rsvp"
                         class="border-green-dark/10 flex size-12 animate-bounce items-center justify-center rounded-full border bg-white shadow-sm">
                         <x-icons.arrow-down class="fill-green size-8" />
