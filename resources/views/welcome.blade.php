@@ -214,14 +214,14 @@
 
                 <div class="mt-8 grid gap-4">
                     @foreach ($updates as $update)
-                        <article class="border-green-dark/10 bg-green-dark/5 rounded-xl border p-5 text-left shadow-sm">
-                            <div class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                                <h3 class="text-xl font-bold">{{ $update->title }}</h3>
-                                <time class="text-sm text-green-dark/60" datetime="{{ $update->published_at->toDateString() }}">
+                        <article class="border-green-dark/10 bg-white/70 rounded-2xl border p-6 text-left shadow-sm sm:p-8">
+                            <div class="border-green-dark/10 flex flex-col gap-2 border-b pb-4 sm:flex-row sm:items-baseline sm:justify-between">
+                                <h3 class="text-2xl font-bold leading-tight">{{ $update->title }}</h3>
+                                <time class="text-sm font-bold uppercase tracking-wide text-green-dark/50" datetime="{{ $update->published_at->toDateString() }}">
                                     {{ $update->published_at->format('F j, Y') }}
                                 </time>
                             </div>
-                            <div class="prose prose-sm mt-3 max-w-none text-green-dark/80">{!! str($update->body)->sanitizeHtml() !!}</div>
+                            <div class="updates-content mt-5">{!! str($update->body)->sanitizeHtml() !!}</div>
                         </article>
                     @endforeach
                 </div>

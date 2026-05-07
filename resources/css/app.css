@@ -38,3 +38,75 @@ html {
     scroll-behavior: smooth;
 }
 
+@layer components {
+    .updates-content {
+        color: color-mix(in srgb, var(--color-green-dark) 78%, transparent);
+        font-size: 1.0625rem;
+        line-height: 1.7;
+    }
+
+    .updates-content > * + * {
+        margin-top: 1rem;
+    }
+
+    .updates-content h1,
+    .updates-content h2,
+    .updates-content h3,
+    .updates-content h4 {
+        color: var(--color-green-dark);
+        font-weight: 800;
+        line-height: 1.15;
+        margin-top: 1.6em;
+    }
+
+    .updates-content h1 {
+        font-size: 1.75rem;
+    }
+
+    .updates-content h2 {
+        font-size: 1.45rem;
+    }
+
+    .updates-content h3 {
+        font-size: 1.2rem;
+    }
+
+    .updates-content strong {
+        color: var(--color-green-dark);
+        font-weight: 800;
+    }
+
+    .updates-content a {
+        color: var(--color-green-dark);
+        font-weight: 800;
+        text-decoration: underline;
+        text-decoration-color: color-mix(in srgb, var(--color-green) 45%, transparent);
+        text-decoration-thickness: 0.12em;
+        text-underline-offset: 0.18em;
+    }
+
+    .updates-content ul,
+    .updates-content ol {
+        padding-left: 1.35rem;
+    }
+
+    .updates-content ul {
+        list-style: disc;
+    }
+
+    .updates-content ol {
+        list-style: decimal;
+    }
+
+    .updates-content li + li {
+        margin-top: 0.35rem;
+    }
+
+    .updates-content blockquote {
+        border-left: 0.25rem solid var(--color-green);
+        color: color-mix(in srgb, var(--color-green-dark) 70%, transparent);
+        font-style: italic;
+        margin-left: 0;
+        padding-left: 1rem;
+    }
+}
