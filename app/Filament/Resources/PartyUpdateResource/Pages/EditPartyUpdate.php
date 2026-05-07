@@ -8,6 +8,8 @@ use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Support\Enums\MaxWidth;
+use Illuminate\Contracts\View\View;
 
 class EditPartyUpdate extends EditRecord
 {
@@ -16,10 +18,22 @@ class EditPartyUpdate extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('previewMailchimpEmail')
+                ->label('Preview Email')
+                ->icon('heroicon-o-eye')
+                ->visible(fn (): bool => $this->record->publishesToEmail())
+                ->modalHeading('Mailchimp email preview')
+                ->modalDescription('This preview uses the saved update content and does not create, test, or send a Mailchimp campaign.')
+                ->modalWidth(MaxWidth::SevenExtraLarge)
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Close')
+                ->modalContent(fn (MailchimpUpdateCampaignService $mailchimp): View => view('filament.party-update-email-preview', [
+                    'html' => $mailchimp->previewHtml($this->record),
+                ])),
             Actions\Action::make('createMailchimpDraft')
                 ->label('Create Mailchimp Draft')
                 ->icon('heroicon-o-envelope')
-                ->visible(fn (): bool => !$this->record->mailchimp_campaign_id)
+                ->visible(fn (): bool => $this->record->publishesToEmail() && ! $this->record->mailchimp_campaign_id)
                 ->requiresConfirmation()
                 ->action(function (MailchimpUpdateCampaignService $mailchimp): void {
                     $this->save();
@@ -50,7 +64,7 @@ class EditPartyUpdate extends EditRecord
                 ->label('Send Mailchimp')
                 ->icon('heroicon-o-paper-airplane')
                 ->color('danger')
-                ->visible(fn (): bool => !$this->record->mailchimp_sent_at)
+                ->visible(fn (): bool => $this->record->publishesToEmail() && ! $this->record->mailchimp_sent_at)
                 ->requiresConfirmation()
                 ->modalHeading('Send this update to Mailchimp subscribers?')
                 ->modalDescription('This saves the update, creates a Mailchimp campaign if needed, then sends it to the configured audience. This cannot be undone.')
@@ -82,6 +96,7 @@ class EditPartyUpdate extends EditRecord
             Actions\Action::make('sendMailchimpTest')
                 ->label('Send Test Email')
                 ->icon('heroicon-o-envelope-open')
+                ->visible(fn (): bool => $this->record->publishesToEmail())
                 ->form([
                     Forms\Components\TextInput::make('email')
                         ->label('Test email')

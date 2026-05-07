@@ -1,22 +1,19 @@
 <?php
 
-use App\Models\Rsvp;
-use App\Models\User;
+use App\Jobs\SendRsvpNotifications;
 use App\Models\Party;
 use App\Models\PartyUpdate;
-use Livewire\Volt\Volt;
-use Tests\Feature\Traits\WithViewComposer;
-use Tests\Feature\Traits\WithNewsletterMock;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
-use Spatie\Newsletter\Facades\Newsletter;
-use Illuminate\Support\Facades\Config;
-use Carbon\Carbon;
+use App\Models\Rsvp;
+use App\Models\User;
 use App\Notifications\AdminRsvpNotification;
-use Illuminate\Support\Facades\Queue;
+use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Notification;
-use App\Jobs\SendRsvpNotifications;
+use Illuminate\Support\Facades\Queue;
+use Livewire\Volt\Volt;
+use Tests\Feature\Traits\WithNewsletterMock;
+use Tests\Feature\Traits\WithViewComposer;
 
 uses(RefreshDatabase::class);
 uses(WithViewComposer::class);
@@ -84,7 +81,7 @@ test('validation errors are shown for invalid input', function () {
         ->assertHasErrors([
             'first_name' => 'required',
             'email' => 'email',
-            'phone' => 'required_if'
+            'phone' => 'required_if',
         ]);
 });
 
@@ -259,10 +256,31 @@ test('homepage shows published updates newest first', function () {
         'published_at' => Carbon::parse('2026-05-02 09:00:00'),
     ]);
 
+    PartyUpdate::factory()->create([
+        'party_id' => $party->id,
+        'title' => 'Email only update',
+        'body' => 'This should only go to Mailchimp.',
+        'publish_target' => PartyUpdate::PUBLISH_TARGET_EMAIL,
+        'is_published' => true,
+        'published_at' => Carbon::parse('2026-05-03 09:00:00'),
+    ]);
+
+    PartyUpdate::factory()->create([
+        'party_id' => $party->id,
+        'title' => 'Both channels update',
+        'body' => 'This should also appear publicly.',
+        'publish_target' => PartyUpdate::PUBLISH_TARGET_BOTH,
+        'is_published' => true,
+        'published_at' => Carbon::parse('2026-05-04 09:00:00'),
+    ]);
+
     $this->get('/')
         ->assertOk()
         ->assertSee('Updates')
-        ->assertSeeInOrder(['Newer update', 'Older update'])
+        ->assertSeeInOrder(['Both channels update', 'Newer update', 'Older update'])
+        ->assertDontSee('Email only update')
+        ->assertDontSee('This should only go to Mailchimp.')
+        ->assertSee('This should also appear publicly.')
         ->assertSee('This happened second.')
         ->assertSee('This happened first.');
 });
@@ -495,7 +513,7 @@ test('existing user is updated when RSVPing again', function () {
 
     // Should only have one user
     expect(User::where('email', 'john@example.com')->count())->toBe(1);
-    
+
     // User should have updated information
     $user = User::where('email', 'john@example.com')->first();
     expect($user->first_name)->toBe('Johnny');
@@ -649,7 +667,7 @@ test('rsvp is updated when user RSVPs for the same party again', function () {
 
     // Should only have one user
     expect(User::where('email', 'john@example.com')->count())->toBe(1);
-    
+
     // User should have updated information
     $user = User::where('email', 'john@example.com')->first();
     expect($user->first_name)->toBe('Johnny');
@@ -763,7 +781,7 @@ test('admin receives notification when RSVP is submitted', function () {
     $user = User::factory()->create([
         'email' => 'john@example.com',
         'first_name' => 'John',
-        'last_name' => 'Doe'
+        'last_name' => 'Doe',
     ]);
 
     $rsvp = Rsvp::create([
@@ -772,7 +790,7 @@ test('admin receives notification when RSVP is submitted', function () {
         'attending_count' => 2,
         'volunteer' => false,
         'receive_email_updates' => true,
-        'receive_sms_updates' => false
+        'receive_sms_updates' => false,
     ]);
 
     // Send notification directly
