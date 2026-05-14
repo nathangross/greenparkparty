@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Volt\Volt;
+use Spatie\Newsletter\Facades\Newsletter;
 use Tests\Feature\Traits\WithNewsletterMock;
 use Tests\Feature\Traits\WithViewComposer;
 
@@ -592,6 +593,171 @@ test('user is added to mailchimp when opting in for sms updates', function () {
     $this->assertDatabaseHas('users', [
         'first_name' => 'Jane',
         'email' => 'jane@example.com',
+    ]);
+});
+
+test('rsvp opt in updates mailchimp contact and applies yearly tags', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    Config::set('newsletter.lists.subscribers.id', 'mailchimp-list-id');
+
+    $mailchimp = new class
+    {
+        public ?string $subscribedEmail = null;
+
+        public array $mergeFields = [];
+
+        public ?string $tagEndpoint = null;
+
+        public array $tagPayload = [];
+
+        public function getApi(): self
+        {
+            return $this;
+        }
+
+        public function get(string $endpoint): array
+        {
+            return [];
+        }
+
+        public function subscribeOrUpdate(string $email, array $mergeFields = []): bool
+        {
+            $this->subscribedEmail = $email;
+            $this->mergeFields = $mergeFields;
+
+            return true;
+        }
+
+        public function post(string $endpoint, array $payload = []): bool
+        {
+            $this->tagEndpoint = $endpoint;
+            $this->tagPayload = $payload;
+
+            return true;
+        }
+    };
+
+    Newsletter::swap($mailchimp);
+
+    $party = Party::factory()->create([
+        'is_active' => true,
+        'primary_date_start' => Carbon::parse('2026-06-27 16:00:00'),
+    ]);
+    $this->setUpViewComposer($party);
+
+    Volt::test('rsvp-form')
+        ->set('first_name', 'Jane')
+        ->set('last_name', 'Neighbor')
+        ->set('email', 'JANE@EXAMPLE.COM')
+        ->set('phone', '123-456-7890')
+        ->set('showAttending', true)
+        ->set('attending_count', 2)
+        ->set('volunteer', true)
+        ->set('receive_email_updates', true)
+        ->set('receive_sms_updates', true)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($mailchimp->subscribedEmail)->toBe('jane@example.com')
+        ->and($mailchimp->mergeFields)->toBe([
+            'FNAME' => 'Jane',
+            'LNAME' => 'Neighbor',
+            'PHONE' => '123-456-7890',
+        ])
+        ->and($mailchimp->tagEndpoint)->toBe('lists/mailchimp-list-id/members/'.md5('jane@example.com').'/tags')
+        ->and($mailchimp->tagPayload)->toBe([
+            'tags' => [
+                [
+                    'name' => '2026 - Attending',
+                    'status' => 'active',
+                ],
+                [
+                    'name' => '2026 - Volunteers',
+                    'status' => 'active',
+                ],
+                [
+                    'name' => '2026 - Email Updates',
+                    'status' => 'active',
+                ],
+                [
+                    'name' => '2026 - SMS Updates',
+                    'status' => 'active',
+                ],
+            ],
+        ]);
+});
+
+test('rsvp update deactivates mailchimp tags that no longer apply', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    Config::set('newsletter.lists.subscribers.id', 'mailchimp-list-id');
+
+    $mailchimp = new class
+    {
+        public array $tagPayload = [];
+
+        public function getApi(): self
+        {
+            return $this;
+        }
+
+        public function get(string $endpoint): array
+        {
+            return [];
+        }
+
+        public function subscribeOrUpdate(string $email, array $mergeFields = []): bool
+        {
+            return true;
+        }
+
+        public function post(string $endpoint, array $payload = []): bool
+        {
+            $this->tagPayload = $payload;
+
+            return true;
+        }
+    };
+
+    Newsletter::swap($mailchimp);
+
+    $party = Party::factory()->create([
+        'is_active' => true,
+        'primary_date_start' => Carbon::parse('2026-06-27 16:00:00'),
+    ]);
+    $this->setUpViewComposer($party);
+
+    Volt::test('rsvp-form')
+        ->set('first_name', 'Jane')
+        ->set('last_name', 'Neighbor')
+        ->set('email', 'jane@example.com')
+        ->set('showAttending', false)
+        ->set('volunteer', false)
+        ->set('receive_email_updates', true)
+        ->set('receive_sms_updates', false)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($mailchimp->tagPayload)->toBe([
+        'tags' => [
+            [
+                'name' => '2026 - Attending',
+                'status' => 'inactive',
+            ],
+            [
+                'name' => '2026 - Volunteers',
+                'status' => 'inactive',
+            ],
+            [
+                'name' => '2026 - Email Updates',
+                'status' => 'active',
+            ],
+            [
+                'name' => '2026 - SMS Updates',
+                'status' => 'inactive',
+            ],
+        ],
     ]);
 });
 

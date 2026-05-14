@@ -178,8 +178,12 @@ $save = function () {
                         'status' => $finalAttendingCount > 0 ? 'active' : 'inactive',
                     ],
                     [
-                        'name' => $partyYear . ' - Volunteer',
+                        'name' => $partyYear . ' - Volunteers',
                         'status' => $volunteer ? 'active' : 'inactive',
+                    ],
+                    [
+                        'name' => $partyYear . ' - Email Updates',
+                        'status' => $receiveEmailUpdates ? 'active' : 'inactive',
                     ],
                     [
                         'name' => $partyYear . ' - SMS Updates',
