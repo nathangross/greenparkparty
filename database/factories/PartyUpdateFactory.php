@@ -20,6 +20,7 @@ class PartyUpdateFactory extends Factory
             'publish_target' => PartyUpdate::PUBLISH_TARGET_HOMEPAGE,
             'mailchimp_list_id' => null,
             'mailchimp_segment_id' => null,
+            'mailchimp_status' => null,
             'is_published' => true,
             'published_at' => now(),
         ];

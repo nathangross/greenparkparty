@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\PartyUpdate;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -20,6 +21,7 @@ class MailchimpUpdateCampaignService
             $campaignId = 'local-'.Str::uuid();
             $update->forceFill([
                 'mailchimp_campaign_id' => $campaignId,
+                'mailchimp_status' => 'save',
                 'mailchimp_error' => null,
             ])->save();
 
@@ -34,6 +36,7 @@ class MailchimpUpdateCampaignService
             'recipients' => $this->recipientsForUpdate($update, $listId),
             'settings' => $this->campaignSettingsForUpdate($update),
         ]);
+        $this->ensureMailchimpRequestSucceeded($mailchimp, $campaign, 'create Mailchimp campaign');
 
         $campaignId = $campaign['id'] ?? null;
 
@@ -45,6 +48,7 @@ class MailchimpUpdateCampaignService
 
         $update->forceFill([
             'mailchimp_campaign_id' => $campaignId,
+            'mailchimp_status' => $campaign['status'] ?? 'save',
             'mailchimp_error' => null,
         ])->save();
 
@@ -65,6 +69,7 @@ class MailchimpUpdateCampaignService
 
         if (App::environment(['local', 'testing'])) {
             $update->forceFill([
+                'mailchimp_status' => 'sent',
                 'mailchimp_sent_at' => now(),
                 'mailchimp_error' => null,
             ])->save();
@@ -72,9 +77,12 @@ class MailchimpUpdateCampaignService
             return;
         }
 
-        Newsletter::getApi()->post("campaigns/{$update->mailchimp_campaign_id}/actions/send");
+        $mailchimp = Newsletter::getApi();
+        $response = $mailchimp->post("campaigns/{$update->mailchimp_campaign_id}/actions/send");
+        $this->ensureMailchimpRequestSucceeded($mailchimp, $response, 'send Mailchimp campaign');
 
         $update->forceFill([
+            'mailchimp_status' => 'sent',
             'mailchimp_sent_at' => now(),
             'mailchimp_error' => null,
         ])->save();
@@ -98,12 +106,53 @@ class MailchimpUpdateCampaignService
             return;
         }
 
-        Newsletter::getApi()->post("campaigns/{$update->mailchimp_campaign_id}/actions/test", [
+        $mailchimp = Newsletter::getApi();
+        $response = $mailchimp->post("campaigns/{$update->mailchimp_campaign_id}/actions/test", [
             'test_emails' => array_values($emails),
             'send_type' => 'html',
         ]);
+        $this->ensureMailchimpRequestSucceeded($mailchimp, $response, 'send Mailchimp test email');
 
         $update->forceFill(['mailchimp_error' => null])->save();
+    }
+
+    public function syncCampaignStatus(PartyUpdate $update): array
+    {
+        $this->ensureConfigured();
+        $this->ensureEmailTarget($update);
+
+        if (! $update->mailchimp_campaign_id) {
+            throw new RuntimeException('This update does not have a Mailchimp campaign yet.');
+        }
+
+        if (App::environment(['local', 'testing'])) {
+            return [
+                'status' => $update->mailchimp_status,
+                'sent_at' => $update->mailchimp_sent_at,
+            ];
+        }
+
+        $mailchimp = Newsletter::getApi();
+        $campaign = $mailchimp->get("campaigns/{$update->mailchimp_campaign_id}", [
+            'fields' => 'id,status,send_time',
+        ]);
+        $this->ensureMailchimpRequestSucceeded($mailchimp, $campaign, 'fetch Mailchimp campaign status');
+
+        $status = $campaign['status'] ?? null;
+        $sentAt = $status === 'sent'
+            ? $this->parseMailchimpTimestamp($campaign['send_time'] ?? null)
+            : null;
+
+        $update->forceFill([
+            'mailchimp_status' => $status,
+            'mailchimp_sent_at' => $sentAt,
+            'mailchimp_error' => null,
+        ])->save();
+
+        return [
+            'status' => $status,
+            'sent_at' => $sentAt,
+        ];
     }
 
     public function mailchimpLists(): array
@@ -253,16 +302,40 @@ class MailchimpUpdateCampaignService
 
     protected function updateCampaignSettings(string $campaignId, PartyUpdate $update): void
     {
-        Newsletter::getApi()->patch("campaigns/{$campaignId}", [
+        $mailchimp = Newsletter::getApi();
+        $response = $mailchimp->patch("campaigns/{$campaignId}", [
             'settings' => $this->campaignSettingsForUpdate($update),
         ]);
+        $this->ensureMailchimpRequestSucceeded($mailchimp, $response, 'update Mailchimp campaign settings');
     }
 
     protected function updateCampaignContent(string $campaignId, PartyUpdate $update): void
     {
-        Newsletter::getApi()->put("campaigns/{$campaignId}/content", [
+        $mailchimp = Newsletter::getApi();
+        $response = $mailchimp->put("campaigns/{$campaignId}/content", [
             'html' => $this->previewHtml($update),
         ]);
+        $this->ensureMailchimpRequestSucceeded($mailchimp, $response, 'update Mailchimp campaign content');
+    }
+
+    protected function parseMailchimpTimestamp(?string $timestamp): Carbon
+    {
+        return $timestamp ? Carbon::parse($timestamp) : now();
+    }
+
+    protected function ensureMailchimpRequestSucceeded(object $mailchimp, mixed $response, string $action): void
+    {
+        if (method_exists($mailchimp, 'success') && $mailchimp->success()) {
+            return;
+        }
+
+        if (! method_exists($mailchimp, 'success') && $response !== false) {
+            return;
+        }
+
+        $error = method_exists($mailchimp, 'getLastError') ? $mailchimp->getLastError() : null;
+
+        throw new RuntimeException("Failed to {$action}: ".($error ?: 'Mailchimp returned an unsuccessful response.'));
     }
 
     public function previewHtml(PartyUpdate $update): string

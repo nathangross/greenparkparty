@@ -167,6 +167,17 @@ class PartyUpdateResource extends Resource
                     ->label('Mailchimp Draft')
                     ->placeholder('Not created')
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('mailchimp_status')
+                    ->label('Mailchimp Status')
+                    ->badge()
+                    ->placeholder('Unknown')
+                    ->color(fn (?string $state): string => match ($state) {
+                        'sent' => 'success',
+                        'sending', 'schedule' => 'warning',
+                        'save' => 'gray',
+                        default => 'gray',
+                    })
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('mailchimp_sent_at')
                     ->label('Mailchimp Sent')
                     ->dateTime()

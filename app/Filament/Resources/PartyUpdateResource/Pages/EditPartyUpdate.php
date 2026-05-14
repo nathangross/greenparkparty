@@ -42,6 +42,7 @@ class EditPartyUpdate extends EditRecord
                         $mailchimp->createDraft($this->record);
                         $this->refreshFormData([
                             'mailchimp_campaign_id',
+                            'mailchimp_status',
                             'mailchimp_sent_at',
                             'mailchimp_error',
                         ]);
@@ -60,11 +61,39 @@ class EditPartyUpdate extends EditRecord
                             ->send();
                     }
                 }),
+            Actions\Action::make('syncMailchimpStatus')
+                ->label('Sync Mailchimp Status')
+                ->icon('heroicon-o-arrow-path')
+                ->visible(fn (): bool => $this->record->publishesToEmail() && filled($this->record->mailchimp_campaign_id))
+                ->action(function (MailchimpUpdateCampaignService $mailchimp): void {
+                    try {
+                        $status = $mailchimp->syncCampaignStatus($this->record);
+                        $this->refreshFormData([
+                            'mailchimp_status',
+                            'mailchimp_sent_at',
+                            'mailchimp_error',
+                        ]);
+
+                        Notification::make()
+                            ->title('Mailchimp status synced')
+                            ->body('Mailchimp status: '.($status['status'] ?: 'unknown').'.')
+                            ->success()
+                            ->send();
+                    } catch (\Throwable $exception) {
+                        $this->record->forceFill(['mailchimp_error' => $exception->getMessage()])->save();
+
+                        Notification::make()
+                            ->title('Mailchimp status sync failed')
+                            ->body($exception->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
             Actions\Action::make('sendMailchimp')
                 ->label('Send Mailchimp')
                 ->icon('heroicon-o-paper-airplane')
                 ->color('danger')
-                ->visible(fn (): bool => $this->record->publishesToEmail() && ! $this->record->mailchimp_sent_at)
+                ->visible(fn (): bool => $this->record->publishesToEmail() && ! $this->record->mailchimp_sent_at && ! $this->record->hasMailchimpSendInProgress())
                 ->requiresConfirmation()
                 ->modalHeading('Send this email update now?')
                 ->modalDescription('Review the subject, audience, and segment before sending.')
@@ -78,6 +107,7 @@ class EditPartyUpdate extends EditRecord
                         $mailchimp->send($this->record);
                         $this->refreshFormData([
                             'mailchimp_campaign_id',
+                            'mailchimp_status',
                             'mailchimp_sent_at',
                             'mailchimp_error',
                         ]);
@@ -116,6 +146,7 @@ class EditPartyUpdate extends EditRecord
                         $mailchimp->sendTest($this->record, [$data['email']]);
                         $this->refreshFormData([
                             'mailchimp_campaign_id',
+                            'mailchimp_status',
                             'mailchimp_sent_at',
                             'mailchimp_error',
                         ]);

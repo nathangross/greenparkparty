@@ -162,6 +162,157 @@ test('mailchimp update campaign service uses custom email subject when present',
         ->and($api->campaignPayload['settings']['title'])->toBe('Green Park Party Update - Green Park Party 2026');
 });
 
+test('mailchimp update campaign service does not mark update sent when mailchimp send fails', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    config([
+        'newsletter.lists.subscribers.id' => 'default-list-id',
+        'mail.from.address' => 'noreply@example.com',
+    ]);
+
+    $api = new class
+    {
+        public bool $successful = true;
+
+        public function patch(string $endpoint, array $payload = []): array
+        {
+            $this->successful = true;
+
+            return [];
+        }
+
+        public function put(string $endpoint, array $payload = []): array
+        {
+            $this->successful = true;
+
+            return [];
+        }
+
+        public function post(string $endpoint, array $payload = []): array
+        {
+            $this->successful = false;
+
+            return [
+                'status' => 400,
+                'detail' => 'Campaign cannot be sent because the send checklist is incomplete.',
+            ];
+        }
+
+        public function success(): bool
+        {
+            return $this->successful;
+        }
+
+        public function getLastError(): string
+        {
+            return 'Campaign cannot be sent because the send checklist is incomplete.';
+        }
+    };
+
+    Newsletter::shouldReceive('getApi')
+        ->andReturn($api);
+
+    $update = PartyUpdate::factory()->create([
+        'title' => 'Green Park Party 2026',
+        'publish_target' => PartyUpdate::PUBLISH_TARGET_EMAIL,
+        'mailchimp_campaign_id' => 'existing-campaign-id',
+        'mailchimp_sent_at' => null,
+    ]);
+
+    app(MailchimpUpdateCampaignService::class)->send($update);
+})->throws(
+    \RuntimeException::class,
+    'Failed to send Mailchimp campaign: Campaign cannot be sent because the send checklist is incomplete.'
+);
+
+test('mailchimp update campaign service syncs sent status from mailchimp', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    config([
+        'newsletter.lists.subscribers.id' => 'default-list-id',
+        'mail.from.address' => 'noreply@example.com',
+    ]);
+
+    $api = new class
+    {
+        public function get(string $endpoint, array $payload = []): array
+        {
+            return [
+                'id' => 'existing-campaign-id',
+                'status' => 'sent',
+                'send_time' => '2026-05-14T14:30:00+00:00',
+            ];
+        }
+
+        public function success(): bool
+        {
+            return true;
+        }
+    };
+
+    Newsletter::shouldReceive('getApi')
+        ->andReturn($api);
+
+    $update = PartyUpdate::factory()->create([
+        'publish_target' => PartyUpdate::PUBLISH_TARGET_EMAIL,
+        'mailchimp_campaign_id' => 'existing-campaign-id',
+        'mailchimp_status' => 'save',
+        'mailchimp_sent_at' => null,
+    ]);
+
+    $status = app(MailchimpUpdateCampaignService::class)->syncCampaignStatus($update);
+
+    $update->refresh();
+
+    expect($status['status'])->toBe('sent')
+        ->and($update->mailchimp_status)->toBe('sent')
+        ->and($update->mailchimp_sent_at?->toIso8601String())->toBe('2026-05-14T14:30:00+00:00');
+});
+
+test('mailchimp update campaign service clears local sent state when mailchimp is still draft', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    config([
+        'newsletter.lists.subscribers.id' => 'default-list-id',
+        'mail.from.address' => 'noreply@example.com',
+    ]);
+
+    $api = new class
+    {
+        public function get(string $endpoint, array $payload = []): array
+        {
+            return [
+                'id' => 'existing-campaign-id',
+                'status' => 'save',
+                'send_time' => null,
+            ];
+        }
+
+        public function success(): bool
+        {
+            return true;
+        }
+    };
+
+    Newsletter::shouldReceive('getApi')
+        ->andReturn($api);
+
+    $update = PartyUpdate::factory()->create([
+        'publish_target' => PartyUpdate::PUBLISH_TARGET_EMAIL,
+        'mailchimp_campaign_id' => 'existing-campaign-id',
+        'mailchimp_status' => 'sent',
+        'mailchimp_sent_at' => now(),
+    ]);
+
+    $status = app(MailchimpUpdateCampaignService::class)->syncCampaignStatus($update);
+
+    $update->refresh();
+
+    expect($status['status'])->toBe('save')
+        ->and($update->mailchimp_status)->toBe('save')
+        ->and($update->mailchimp_sent_at)->toBeNull();
+});
+
 test('mailchimp update campaign service summarizes send details', function () {
     config(['newsletter.lists.subscribers.id' => 'default-list-id']);
 

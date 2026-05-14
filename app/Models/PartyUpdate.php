@@ -57,4 +57,9 @@ class PartyUpdate extends Model
             self::PUBLISH_TARGET_BOTH,
         ], true);
     }
+
+    public function hasMailchimpSendInProgress(): bool
+    {
+        return in_array($this->mailchimp_status, ['sending', 'schedule'], true);
+    }
 }
