@@ -15,6 +15,7 @@ class PartyUpdateFactory extends Factory
         return [
             'party_id' => Party::factory(),
             'title' => $this->faker->sentence(4),
+            'email_subject' => null,
             'body' => $this->faker->paragraph(),
             'publish_target' => PartyUpdate::PUBLISH_TARGET_HOMEPAGE,
             'mailchimp_list_id' => null,

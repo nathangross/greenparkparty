@@ -62,6 +62,106 @@ test('mailchimp update campaign service sends a local test without marking campa
         ->and($update->mailchimp_error)->toBeNull();
 });
 
+test('mailchimp update campaign service refreshes existing campaign settings before sending a test', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    config([
+        'newsletter.lists.subscribers.id' => 'default-list-id',
+        'mail.from.address' => 'noreply@example.com',
+    ]);
+
+    $api = new class
+    {
+        public array $patchPayload = [];
+
+        public array $putPayload = [];
+
+        public array $testPayload = [];
+
+        public function patch(string $endpoint, array $payload = []): array
+        {
+            $this->patchPayload = $payload;
+
+            return [];
+        }
+
+        public function put(string $endpoint, array $payload = []): array
+        {
+            $this->putPayload = $payload;
+
+            return [];
+        }
+
+        public function post(string $endpoint, array $payload = []): array
+        {
+            $this->testPayload = $payload;
+
+            return [];
+        }
+    };
+
+    Newsletter::shouldReceive('getApi')
+        ->andReturn($api);
+
+    $update = PartyUpdate::factory()->create([
+        'title' => 'Green Park Party 2026',
+        'email_subject' => null,
+        'body' => '<p>Come join us.</p>',
+        'publish_target' => PartyUpdate::PUBLISH_TARGET_EMAIL,
+        'mailchimp_campaign_id' => 'existing-campaign-id',
+    ]);
+
+    app(MailchimpUpdateCampaignService::class)->sendTest($update, ['organizer@example.com']);
+
+    expect($api->patchPayload['settings']['subject_line'])->toBe('Green Park Party 2026')
+        ->and($api->patchPayload['settings']['title'])->toBe('Green Park Party Update - Green Park Party 2026')
+        ->and($api->putPayload['html'])->toContain('Green Park Party 2026')
+        ->and($api->testPayload)->toBe([
+            'test_emails' => ['organizer@example.com'],
+            'send_type' => 'html',
+        ]);
+});
+
+test('mailchimp update campaign service uses custom email subject when present', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    config([
+        'newsletter.lists.subscribers.id' => 'default-list-id',
+        'mail.from.address' => 'noreply@example.com',
+    ]);
+
+    $api = new class
+    {
+        public array $campaignPayload = [];
+
+        public function post(string $endpoint, array $payload = []): array
+        {
+            $this->campaignPayload = $payload;
+
+            return ['id' => 'campaign-id'];
+        }
+
+        public function put(string $endpoint, array $payload = []): array
+        {
+            return [];
+        }
+    };
+
+    Newsletter::shouldReceive('getApi')
+        ->andReturn($api);
+
+    $update = PartyUpdate::factory()->create([
+        'title' => 'Green Park Party 2026',
+        'email_subject' => 'RSVPs are open for 2026!',
+        'publish_target' => PartyUpdate::PUBLISH_TARGET_EMAIL,
+    ]);
+
+    app(MailchimpUpdateCampaignService::class)->createDraft($update);
+
+    expect($api->campaignPayload['settings']['subject_line'])->toBe('RSVPs are open for 2026!')
+        ->and($api->campaignPayload['settings']['title'])->toBe('Green Park Party Update - Green Park Party 2026');
+});
+
 test('mailchimp update campaign service refuses homepage only updates', function () {
     $update = PartyUpdate::factory()->create([
         'title' => 'Homepage only',

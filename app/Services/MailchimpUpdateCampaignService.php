@@ -32,12 +32,7 @@ class MailchimpUpdateCampaignService
         $campaign = $mailchimp->post('campaigns', [
             'type' => 'regular',
             'recipients' => $this->recipientsForUpdate($update, $listId),
-            'settings' => [
-                'subject_line' => $update->title,
-                'title' => 'Green Park Party Update - '.$update->title,
-                'from_name' => config('mail.from.name', 'Green Park Party'),
-                'reply_to' => config('mail.from.address'),
-            ],
+            'settings' => $this->campaignSettingsForUpdate($update),
         ]);
 
         $campaignId = $campaign['id'] ?? null;
@@ -65,7 +60,7 @@ class MailchimpUpdateCampaignService
             $this->createDraft($update);
             $update->refresh();
         } elseif (! App::environment(['local', 'testing'])) {
-            $this->updateCampaignContent($update->mailchimp_campaign_id, $update);
+            $this->syncCampaignDraft($update->mailchimp_campaign_id, $update);
         }
 
         if (App::environment(['local', 'testing'])) {
@@ -94,7 +89,7 @@ class MailchimpUpdateCampaignService
             $this->createDraft($update);
             $update->refresh();
         } elseif (! App::environment(['local', 'testing'])) {
-            $this->updateCampaignContent($update->mailchimp_campaign_id, $update);
+            $this->syncCampaignDraft($update->mailchimp_campaign_id, $update);
         }
 
         if (App::environment(['local', 'testing'])) {
@@ -212,6 +207,31 @@ class MailchimpUpdateCampaignService
         }
 
         return $recipients;
+    }
+
+    protected function campaignSettingsForUpdate(PartyUpdate $update): array
+    {
+        $subject = $update->email_subject ?: $update->title;
+
+        return [
+            'subject_line' => $subject,
+            'title' => 'Green Park Party Update - '.$update->title,
+            'from_name' => config('mail.from.name', 'Green Park Party'),
+            'reply_to' => config('mail.from.address'),
+        ];
+    }
+
+    protected function syncCampaignDraft(string $campaignId, PartyUpdate $update): void
+    {
+        $this->updateCampaignSettings($campaignId, $update);
+        $this->updateCampaignContent($campaignId, $update);
+    }
+
+    protected function updateCampaignSettings(string $campaignId, PartyUpdate $update): void
+    {
+        Newsletter::getApi()->patch("campaigns/{$campaignId}", [
+            'settings' => $this->campaignSettingsForUpdate($update),
+        ]);
     }
 
     protected function updateCampaignContent(string $campaignId, PartyUpdate $update): void

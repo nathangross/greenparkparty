@@ -67,6 +67,16 @@ class PartyUpdateResource extends Resource
                     ->inline(false)
                     ->live()
                     ->columnSpanFull(),
+                Forms\Components\TextInput::make('email_subject')
+                    ->label('Email subject')
+                    ->maxLength(255)
+                    ->placeholder(fn (Forms\Get $get): string => $get('title') ?: 'Uses the update title')
+                    ->helperText('Optional. Leave blank to use the update title.')
+                    ->visible(fn (Forms\Get $get): bool => in_array($get('publish_target'), [
+                        PartyUpdate::PUBLISH_TARGET_EMAIL,
+                        PartyUpdate::PUBLISH_TARGET_BOTH,
+                    ], true))
+                    ->columnSpanFull(),
                 Forms\Components\Select::make('mailchimp_list_id')
                     ->label('Mailchimp audience')
                     ->options(fn (): array => app(MailchimpUpdateCampaignService::class)->mailchimpLists())
@@ -137,6 +147,10 @@ class PartyUpdateResource extends Resource
                         default => 'gray',
                     })
                     ->sortable(),
+                Tables\Columns\TextColumn::make('email_subject')
+                    ->label('Email Subject')
+                    ->placeholder('Uses title')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('published_at')
                     ->label('Publish date')
                     ->dateTime()
