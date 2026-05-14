@@ -162,6 +162,85 @@ test('mailchimp update campaign service uses custom email subject when present',
         ->and($api->campaignPayload['settings']['title'])->toBe('Green Park Party Update - Green Park Party 2026');
 });
 
+test('mailchimp update campaign service summarizes send details', function () {
+    config(['newsletter.lists.subscribers.id' => 'default-list-id']);
+
+    $update = PartyUpdate::factory()->create([
+        'title' => 'Green Park Party 2026',
+        'email_subject' => 'RSVPs are open for 2026!',
+        'publish_target' => PartyUpdate::PUBLISH_TARGET_EMAIL,
+        'mailchimp_list_id' => 'default-list-id',
+        'mailchimp_segment_id' => null,
+        'mailchimp_campaign_id' => null,
+    ]);
+
+    expect(app(MailchimpUpdateCampaignService::class)->sendSummary($update))->toBe([
+        'subject' => 'RSVPs are open for 2026!',
+        'audience' => 'Configured default audience',
+        'segment' => 'Whole audience',
+        'campaign' => 'Create new Mailchimp draft',
+    ]);
+});
+
+test('mailchimp update campaign service summarizes selected audience segment and existing draft', function () {
+    app()->detectEnvironment(fn () => 'production');
+
+    config([
+        'newsletter.lists.subscribers.id' => 'default-list-id',
+        'mail.from.address' => 'noreply@example.com',
+    ]);
+
+    $api = new class
+    {
+        public function get(string $endpoint, array $payload = []): array
+        {
+            return match ($endpoint) {
+                'lists' => [
+                    'lists' => [
+                        [
+                            'id' => 'selected-list-id',
+                            'name' => 'Green Park Party',
+                            'stats' => [
+                                'member_count' => 45,
+                            ],
+                        ],
+                    ],
+                ],
+                'lists/selected-list-id/segments' => [
+                    'segments' => [
+                        [
+                            'id' => 123456,
+                            'name' => '2026 - Volunteers',
+                            'type' => 'static',
+                            'member_count' => 12,
+                        ],
+                    ],
+                ],
+                default => [],
+            };
+        }
+    };
+
+    Newsletter::shouldReceive('getApi')
+        ->andReturn($api);
+
+    $update = PartyUpdate::factory()->create([
+        'title' => 'Green Park Party 2026',
+        'email_subject' => null,
+        'publish_target' => PartyUpdate::PUBLISH_TARGET_EMAIL,
+        'mailchimp_list_id' => 'selected-list-id',
+        'mailchimp_segment_id' => 123456,
+        'mailchimp_campaign_id' => 'existing-campaign-id',
+    ]);
+
+    expect(app(MailchimpUpdateCampaignService::class)->sendSummary($update))->toBe([
+        'subject' => 'Green Park Party 2026',
+        'audience' => 'Green Park Party (45 contacts)',
+        'segment' => '2026 - Volunteers - static (12 contacts)',
+        'campaign' => 'Update existing Mailchimp draft',
+    ]);
+});
+
 test('mailchimp update campaign service refuses homepage only updates', function () {
     $update = PartyUpdate::factory()->create([
         'title' => 'Homepage only',

@@ -66,8 +66,11 @@ class EditPartyUpdate extends EditRecord
                 ->color('danger')
                 ->visible(fn (): bool => $this->record->publishesToEmail() && ! $this->record->mailchimp_sent_at)
                 ->requiresConfirmation()
-                ->modalHeading('Send this update to Mailchimp subscribers?')
-                ->modalDescription('This saves the update, creates a Mailchimp campaign if needed, then sends it to the configured audience. This cannot be undone.')
+                ->modalHeading('Send this email update now?')
+                ->modalDescription('Review the subject, audience, and segment before sending.')
+                ->modalContent(fn (MailchimpUpdateCampaignService $mailchimp): View => view('filament.party-update-send-confirmation', [
+                    'summary' => $mailchimp->sendSummary($this->record),
+                ]))
                 ->action(function (MailchimpUpdateCampaignService $mailchimp): void {
                     $this->save();
 

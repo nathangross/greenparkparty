@@ -173,6 +173,21 @@ class MailchimpUpdateCampaignService
         });
     }
 
+    public function sendSummary(PartyUpdate $update): array
+    {
+        $listId = $this->listIdForUpdate($update);
+        $lists = $this->mailchimpLists();
+        $segmentId = $update->mailchimp_segment_id;
+        $segments = $segmentId ? $this->mailchimpSegments($listId) : [];
+
+        return [
+            'subject' => $this->subjectForUpdate($update),
+            'audience' => $lists[$listId] ?? $listId,
+            'segment' => $segmentId ? ($segments[$segmentId] ?? $segmentId) : 'Whole audience',
+            'campaign' => $update->mailchimp_campaign_id ? 'Update existing Mailchimp draft' : 'Create new Mailchimp draft',
+        ];
+    }
+
     protected function ensureConfigured(): void
     {
         if (! config('newsletter.lists.subscribers.id')) {
@@ -211,14 +226,17 @@ class MailchimpUpdateCampaignService
 
     protected function campaignSettingsForUpdate(PartyUpdate $update): array
     {
-        $subject = $update->email_subject ?: $update->title;
-
         return [
-            'subject_line' => $subject,
+            'subject_line' => $this->subjectForUpdate($update),
             'title' => 'Green Park Party Update - '.$update->title,
             'from_name' => config('mail.from.name', 'Green Park Party'),
             'reply_to' => config('mail.from.address'),
         ];
+    }
+
+    protected function subjectForUpdate(PartyUpdate $update): string
+    {
+        return $update->email_subject ?: $update->title;
     }
 
     protected function syncCampaignDraft(string $campaignId, PartyUpdate $update): void
