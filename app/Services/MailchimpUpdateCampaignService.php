@@ -184,7 +184,8 @@ class MailchimpUpdateCampaignService
             'subject' => $this->subjectForUpdate($update),
             'audience' => $lists[$listId] ?? $listId,
             'segment' => $segmentId ? ($segments[$segmentId] ?? $segmentId) : 'Whole audience',
-            'campaign' => $update->mailchimp_campaign_id ? 'Update existing Mailchimp draft' : 'Create new Mailchimp draft',
+            'campaign' => $this->campaignTitleForUpdate($update),
+            'campaign_status' => $update->mailchimp_campaign_id ? 'update existing' : 'new',
         ];
     }
 
@@ -228,7 +229,7 @@ class MailchimpUpdateCampaignService
     {
         return [
             'subject_line' => $this->subjectForUpdate($update),
-            'title' => 'Green Park Party Update - '.$update->title,
+            'title' => $this->campaignTitleForUpdate($update),
             'from_name' => config('mail.from.name', 'Green Park Party'),
             'reply_to' => config('mail.from.address'),
         ];
@@ -237,6 +238,11 @@ class MailchimpUpdateCampaignService
     protected function subjectForUpdate(PartyUpdate $update): string
     {
         return $update->email_subject ?: $update->title;
+    }
+
+    protected function campaignTitleForUpdate(PartyUpdate $update): string
+    {
+        return 'Green Park Party Update - '.$update->title;
     }
 
     protected function syncCampaignDraft(string $campaignId, PartyUpdate $update): void

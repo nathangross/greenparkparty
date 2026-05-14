@@ -178,7 +178,8 @@ test('mailchimp update campaign service summarizes send details', function () {
         'subject' => 'RSVPs are open for 2026!',
         'audience' => 'Configured default audience',
         'segment' => 'Whole audience',
-        'campaign' => 'Create new Mailchimp draft',
+        'campaign' => 'Green Park Party Update - Green Park Party 2026',
+        'campaign_status' => 'new',
     ]);
 });
 
@@ -237,7 +238,8 @@ test('mailchimp update campaign service summarizes selected audience segment and
         'subject' => 'Green Park Party 2026',
         'audience' => 'Green Park Party (45 contacts)',
         'segment' => '2026 - Volunteers - static (12 contacts)',
-        'campaign' => 'Update existing Mailchimp draft',
+        'campaign' => 'Green Park Party Update - Green Park Party 2026',
+        'campaign_status' => 'update existing',
     ]);
 });
 

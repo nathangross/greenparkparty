@@ -14,14 +14,17 @@
                 <dd class="mt-1 font-semibold text-gray-950">{{ $summary['segment'] }}</dd>
             </div>
             <div>
-                <dt class="font-medium text-gray-500">Mailchimp campaign</dt>
-                <dd class="mt-1 font-semibold text-gray-950">{{ $summary['campaign'] }}</dd>
+                <dt class="font-medium text-gray-500">Campaign</dt>
+                <dd class="mt-1 font-semibold text-gray-950">
+                    {{ $summary['campaign'] }}
+                    <span class="font-medium text-gray-500">({{ $summary['campaign_status'] }})</span>
+                </dd>
             </div>
         </dl>
     </div>
 
     <p class="text-gray-600">
-        This will save your latest changes, create or update the Mailchimp campaign draft for this update, and send it now.
+        This will save your latest changes, prepare this email in Mailchimp, and send it now.
         This cannot be undone.
     </p>
 </div>
