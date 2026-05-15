@@ -2,11 +2,11 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Rsvp;
-use App\Models\Party;
 use App\Filament\Traits\HasOrganizerToggle;
-use Filament\Widgets\ChartWidget;
+use App\Models\Party;
+use App\Models\Rsvp;
 use Carbon\Carbon;
+use Filament\Widgets\ChartWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -18,29 +18,25 @@ class RsvpTrendChart extends ChartWidget
 
     protected static ?string $pollingInterval = '10s';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {
-        $activeParty = Party::where('is_active', true)->first();
-        
-        if (!$activeParty) {
+        $activeParty = Party::currentForDashboard();
+
+        if (! $activeParty) {
             return [
                 'datasets' => [],
                 'labels' => [],
             ];
         }
 
-        // Get previous party
-        $previousParty = Party::where('id', '!=', $activeParty->id)
-            ->where('primary_date_start', '<', $activeParty->primary_date_start)
-            ->orderBy('primary_date_start', 'desc')
-            ->first();
+        $previousParty = Party::previousBefore($activeParty);
 
-        if (!$previousParty) {
+        if (! $previousParty) {
             // Only show current party data if no previous party
             $currentData = $this->getPartyRsvpTrend($activeParty);
-            
+
             return [
                 'datasets' => [
                     [
@@ -66,13 +62,13 @@ class RsvpTrendChart extends ChartWidget
             'datasets' => [
                 [
                     'label' => $activeParty->title,
-                    'data' => array_map(fn($day) => $currentData[$day] ?? null, $allDays),
+                    'data' => array_map(fn ($day) => $currentData[$day] ?? null, $allDays),
                     'borderColor' => '#36A2EB',
                     'fill' => false,
                 ],
                 [
                     'label' => $previousParty->title,
-                    'data' => array_map(fn($day) => $previousData[$day] ?? null, $allDays),
+                    'data' => array_map(fn ($day) => $previousData[$day] ?? null, $allDays),
                     'borderColor' => '#FF6384',
                     'fill' => false,
                 ],
@@ -86,7 +82,7 @@ class RsvpTrendChart extends ChartWidget
         $rsvps = $this->partyRsvps($party)
             ->select([
                 DB::raw('DATE(created_at) as date'),
-                DB::raw('SUM(attending_count) as total_attending')
+                DB::raw('SUM(attending_count) as total_attending'),
             ])
             ->groupBy('date')
             ->orderBy('date')
@@ -96,7 +92,7 @@ class RsvpTrendChart extends ChartWidget
         $runningTotal = 0;
         $startDate = $rsvps->min('date');
 
-        if (!$startDate) {
+        if (! $startDate) {
             return [];
         }
 
@@ -142,14 +138,8 @@ class RsvpTrendChart extends ChartWidget
 
     protected function partyRsvps(Party $party): Builder
     {
-        $query = Rsvp::where('party_id', $party->id);
-
-        if (!$this->includeOrganizers) {
-            $query->whereHas('user', function (Builder $query) {
-                $query->where('is_organizer', false);
-            });
-        }
-
-        return $query;
+        return Rsvp::query()
+            ->forParty($party)
+            ->forDashboard($this->includeOrganizers);
     }
-} 
+}

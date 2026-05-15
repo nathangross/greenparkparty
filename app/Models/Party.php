@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Party extends Model
 {
     use HasFactory;
+
     protected $guarded = [];
 
     /**
@@ -21,11 +23,35 @@ class Party extends Model
         'primary_date_end' => 'datetime',
         'secondary_date_start' => 'datetime',
         'secondary_date_end' => 'datetime',
+        'is_active' => 'boolean',
     ];
 
     public function rsvps()
     {
         return $this->hasMany(Rsvp::class);  // Assuming 'Rsvp' is the model name
+    }
+
+    public function scopeCurrentFirst(Builder $query): Builder
+    {
+        return $query
+            ->orderByDesc('is_active')
+            ->orderByDesc('primary_date_start')
+            ->orderByDesc('id');
+    }
+
+    public static function currentForDashboard(): ?self
+    {
+        return self::query()->currentFirst()->first();
+    }
+
+    public static function previousBefore(self $party): ?self
+    {
+        return self::query()
+            ->whereKeyNot($party->id)
+            ->where('primary_date_start', '<', $party->primary_date_start)
+            ->orderByDesc('primary_date_start')
+            ->orderByDesc('id')
+            ->first();
     }
 
     /**

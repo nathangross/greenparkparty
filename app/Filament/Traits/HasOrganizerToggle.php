@@ -8,9 +8,15 @@ trait HasOrganizerToggle
 {
     public bool $includeOrganizers = false;
 
-    #[On('organizers-toggled')] 
+    #[On('organizers-toggled')]
     public function handleOrganizerToggle(bool $isEnabled): void
     {
         $this->includeOrganizers = $isEnabled;
     }
-} 
+
+    #[On('active-party-changed')]
+    public function handleActivePartyChanged(): void
+    {
+        //
+    }
+}

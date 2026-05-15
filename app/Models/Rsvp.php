@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Rsvp extends Model
 {
     use HasFactory;
+
     protected $table = 'rsvps';
 
     protected $guarded = [];
@@ -37,5 +39,25 @@ class Rsvp extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function scopeForParty(Builder $query, Party $party): Builder
+    {
+        return $query->where('party_id', $party->id);
+    }
+
+    public function scopeForDashboard(Builder $query, bool $includeOrganizers = false): Builder
+    {
+        if ($includeOrganizers) {
+            return $query;
+        }
+
+        return $query->whereHas('user', function (Builder $query) {
+            $query->where(function (Builder $query) {
+                $query
+                    ->where('is_organizer', false)
+                    ->orWhereNull('is_organizer');
+            });
+        });
     }
 }
